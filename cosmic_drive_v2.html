@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATOMICFORGE - Level 0: Particle Soup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            font-family: 'Courier New', monospace;
+            color: #0FF;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #canvas {
+            flex: 1;
+            display: block;
+            background: #000;
+        }
+
+        .controls {
+            background: rgba(0, 20, 40, 0.9);
+            padding: 20px;
+            border-top: 2px solid #0FF;
+            box-shadow: 0 -5px 30px rgba(0, 255, 255, 0.3);
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group span {
+            min-width: 200px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: #0FF;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #0FF;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #0FF;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            border: none;
+        }
+
+        .value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #FFF;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFF;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #0FF;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .achievement.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .achievement-title {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #0FF;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .achievement-subtitle {
+            font-size: 18px;
+            color: #FFF;
+            margin-bottom: 20px;
+        }
+
+        .achievement-desc {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .tutorial {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #0FF;
+            padding: 20px 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            max-width: 600px;
+            z-index: 100;
+        }
+
+        .tutorial-text {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-hint {
+            font-size: 12px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        button {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #0FF;
+            color: #0FF;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            border-color: #F06;
+            color: #F06;
+            background: rgba(255, 0, 102, 0.2);
+        }
+
+        button.danger:hover {
+            background: rgba(255, 0, 102, 0.4);
+            box-shadow: 0 0 20px rgba(255, 0, 102, 0.6);
+        }
+
+        button.success {
+            border-color: #0F6;
+            color: #0F6;
+            background: rgba(0, 255, 102, 0.2);
+        }
+
+        button.success:hover {
+            background: rgba(0, 255, 102, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+            margin: 0;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0F6;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.8);
+        }
+
+        .status-dot.paused {
+            background: #FF0;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+        }
+
+        .status-dot.stopped {
+            background: #F06;
+            box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
+        }
+
+        .timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFF;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .level-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0FF;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            z-index: 50;
+        }
+
+        .level-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .level-progress {
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .level-progress-bar {
+            height: 100%;
+            background: #0FF;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .element-key {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0FF;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 50;
+            max-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .element-key.minimized {
+            padding: 8px 12px;
+            max-width: auto;
+        }
+
+        .element-key.minimized .key-content {
+            display: none;
+        }
+
+        .element-key h3 {
+            margin-bottom: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .element-key.minimized h3 {
+            margin-bottom: 0;
+        }
+
+        .element-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .element-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .molecule-list {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0FF;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 50;
+            max-width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .molecule-list.minimized {
+            padding: 8px 12px;
+            max-width: auto;
+            max-height: auto;
+            overflow: hidden;
+        }
+
+        .molecule-list.minimized .list-content {
+            display: none;
+        }
+
+        .molecule-list h3 {
+            margin-bottom: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .molecule-list.minimized h3 {
+            margin-bottom: 0;
+        }
+
+        .molecule-item {
+            font-size: 12px;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .toggle-icon {
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .achievements-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0FF;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 50;
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .achievements-panel.minimized {
+            padding: 8px 12px;
+            max-width: auto;
+            max-height: auto;
+            overflow: hidden;
+        }
+
+        .achievements-panel.minimized .achievements-content {
+            display: none;
+        }
+
+        .achievements-panel h3 {
+            margin-bottom: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .achievements-panel.minimized h3 {
+            margin-bottom: 0;
+        }
+
+        .achievement-item {
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .achievement-item.unlocked {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #0FF;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .achievement-item.locked {
+            background: rgba(100, 100, 100, 0.1);
+            border-color: rgba(100, 100, 100, 0.3);
+            opacity: 0.6;
+        }
+
+        .achievement-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .achievement-icon {
+            font-size: 20px;
+        }
+
+        .achievement-title {
+            font-size: 13px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .achievement-status {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .achievement-status.unlocked {
+            background: #0F6;
+            color: #000;
+        }
+
+        .achievement-status.locked {
+            background: rgba(100, 100, 100, 0.5);
+            color: #888;
+        }
+
+        .achievement-desc {
+            font-size: 11px;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .achievement-progress {
+            margin-top: 5px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #0FF;
+            transition: width 0.3s ease;
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #0FF;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            min-width: 350px;
+        }
+
+        .achievement-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .achievement-popup-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        .achievement-popup-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #0FF;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .achievement-popup-subtitle {
+            font-size: 16px;
+            color: #FFF;
+            margin-bottom: 15px;
+        }
+
+        .achievement-popup-desc {
+            font-size: 13px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        .achievement-popup-xp {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #0F6;
+            font-weight: bold;
+        }
+
+        .achievements-summary {
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .summary-text {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .summary-progress {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* ACHIEVEMENT HELP STYLES */
+        .achievement-help {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #0FF;
+            padding: 30px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .achievement-help.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .help-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0FF;
+            padding-bottom: 15px;
+        }
+
+        .help-icon {
+            font-size: 48px;
+        }
+
+        .help-title {
+            font-size: 24px;
+            color: #0FF;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        .help-xp {
+            font-size: 18px;
+            color: #0F6;
+            font-weight: bold;
+        }
+
+        .help-section {
+            margin-bottom: 20px;
+        }
+
+        .help-section h3 {
+            color: #0FF;
+            margin-bottom: 10px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .help-section p {
+            line-height: 1.5;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .strategy-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .strategy-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .strategy-list li:before {
+            content: "⚛️";
+            position: absolute;
+            left: 0;
+        }
+
+        .parameter-recommendations {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .param-item {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .param-label {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 3px;
+        }
+
+        .param-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0FF;
+        }
+
+        .molecule-formula {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .close-help {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #0FF;
+            color: #0FF;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .close-help:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        .achievement-item.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-item.clickable:hover {
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .current-progress {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .progress-info {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .hint-tip {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid rgba(255, 255, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .hint-tip:before {
+            content: "💡 ";
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="level-indicator">
+        <div class="level-title">ATOMICFORGE - Level 0</div>
+        <div class="level-progress">
+            <div class="level-progress-bar" id="level-progress"></div>
+        </div>
+    </div>
+
+    <div class="element-key" id="element-key">
+        <h3 onclick="toggleElementKey()">
+            Elements
+            <span class="toggle-icon" id="element-toggle">▼</span>
+        </h3>
+        <div class="key-content">
+            <div class="element-item">
+                <div class="element-color" style="background: #0FF;"></div>
+                <span>Hydrogen (H)</span>
+            </div>
+            <div class="element-item">
+                <div class="element-color" style="background: #FFF;"></div>
+                <span>Carbon (C)</span>
+            </div>
+            <div class="element-item">
+                <div class="element-color" style="background: #F06;"></div>
+                <span>Oxygen (O)</span>
+            </div>
+            <div class="element-item">
+                <div class="element-color" style="background: #0F6;"></div>
+                <span>Nitrogen (N)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="molecule-list" id="molecule-list">
+        <h3 onclick="toggleMoleculeList()">
+            Molecules
+            <span class="toggle-icon" id="molecule-toggle">▼</span>
+        </h3>
+        <div class="list-content">
+            <div id="molecule-types">
+                <em style="opacity: 0.5;">None yet...</em>
+            </div>
+        </div>
+    </div>
+
+    <div class="achievements-panel" id="achievements-panel">
+        <h3 onclick="toggleAchievements()">
+            Achievements
+            <span class="toggle-icon" id="achievements-toggle">▼</span>
+        </h3>
+        <div class="achievements-content">
+            <div class="achievements-summary">
+                <div class="summary-text" id="achievement-count">0 / 15 Unlocked</div>
+                <div class="summary-progress" id="achievement-percent">0%</div>
+            </div>
+            <div id="achievements-list"></div>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENT HELP PANEL -->
+    <div class="achievement-help" id="achievement-help">
+        <div class="help-header">
+            <div class="help-icon" id="help-icon">⚛️</div>
+            <div>
+                <div class="help-title" id="help-title">Achievement Help</div>
+                <div class="help-xp" id="help-xp">+0 XP</div>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h3>Description</h3>
+            <p id="help-description">Description will appear here.</p>
+        </div>
+
+        <div class="help-section" id="current-progress-section">
+            <h3>Current Progress</h3>
+            <div class="current-progress">
+                <div class="progress-info" id="progress-info">Not started</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="help-progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="help-section" id="strategy-section">
+            <h3>Strategy & Tips</h3>
+            <ul class="strategy-list" id="strategy-list">
+                <li>Strategy tips will appear here</li>
+            </ul>
+        </div>
+
+        <div class="help-section" id="parameters-section">
+            <h3>Recommended Parameters</h3>
+            <div class="parameter-recommendations" id="parameter-recommendations">
+                <!-- Parameter recommendations will be inserted here -->
+            </div>
+        </div>
+
+        <div class="help-section" id="formula-section">
+            <h3>Molecular Formula</h3>
+            <div class="molecule-formula" id="molecule-formula">
+                Formula will appear here
+            </div>
+        </div>
+
+        <div class="hint-tip" id="hint-tip">
+            Pro tip: Adjust parameters gradually and observe the results!
+        </div>
+
+        <button class="close-help" onclick="closeHelp()">CLOSE</button>
+    </div>
+
+    <div class="achievement-popup" id="achievement-popup">
+        <div class="achievement-popup-icon" id="popup-icon">🏆</div>
+        <div class="achievement-popup-title" id="popup-title">Achievement Unlocked!</div>
+        <div class="achievement-popup-subtitle" id="popup-subtitle">First Molecule</div>
+        <div class="achievement-popup-desc" id="popup-desc">You've created your first molecule!</div>
+        <div class="achievement-popup-xp" id="popup-xp">+50 XP</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    
+    <div class="tutorial" id="tutorial">
+        <div class="tutorial-text">
+            In the beginning, there was chaos...<br>
+            Particles collide in the primordial void.
+        </div>
+        <div class="tutorial-hint">
+            Adjust temperature (45-55) to see molecules form<br>
+            <br>
+            <strong>Keyboard Shortcuts:</strong><br>
+            Space/P = Pause | Ctrl+R = Reset<br>
+            Ctrl+S = Export Data | Ctrl+I = Save Image<br>
+            E = Elements | M = Molecules | A = Achievements<br>
+            H = Achievement Help (when viewing achievements)
+        </div>
+        <button onclick="closeTutorial()">BEGIN</button>
+    </div>
+
+    <div class="achievement" id="achievement">
+        <div class="achievement-title">⚛️ FIRST MOLECULE</div>
+        <div class="achievement-subtitle">Molecular Architect</div>
+        <div class="achievement-desc" id="achievement-desc">
+            From chaos, order emerges.<br>
+            You have formed your first stable molecule.
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">RUNNING</span>
+            </div>
+            <div class="timer" id="timer">00:00:00</div>
+        </div>
+
+        <div class="button-group">
+            <button id="pause-btn" onclick="togglePause()">⏸ PAUSE</button>
+            <button id="reset-btn" class="danger" onclick="resetSimulation()">↻ RESET</button>
+            <button id="export-btn" class="success" onclick="exportData()">💾 EXPORT DATA</button>
+            <button id="export-img-btn" class="success" onclick="exportImage()">📷 SAVE IMAGE</button>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <span>🌡️ Temperature</span>
+                <input type="range" id="temperature" min="0" max="100" value="50">
+                <span class="value" id="temp-value">50</span>
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <span>🌊 Particle Density</span>
+                <input type="range" id="density" min="50" max="500" value="150">
+                <span class="value" id="density-value">150</span>
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <span>⚡ Energy Input</span>
+                <input type="range" id="energy" min="0" max="100" value="20">
+                <span class="value" id="energy-value">20</span>
+            </label>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Particles</div>
+                <div class="stat-value" id="particle-count">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Molecules</div>
+                <div class="stat-value" id="molecule-count">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Unique Types</div>
+                <div class="stat-value" id="unique-molecules">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Collisions</div>
+                <div class="stat-value" id="collision-count">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Avg Energy</div>
+                <div class="stat-value" id="avg-energy">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        
+        function resizeCanvas() {
+            const controls = document.querySelector('.controls');
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight - controls.offsetHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Particle types
+        const ELEMENT_TYPES = {
+            HYDROGEN: { symbol: 'H', color: '#0FF', size: 2, mass: 1.0, electrons: 1 },
+            CARBON: { symbol: 'C', color: '#FFF', size: 3, mass: 12.0, electrons: 4 },
+            OXYGEN: { symbol: 'O', color: '#F06', size: 3, mass: 16.0, electrons: 6 },
+            NITROGEN: { symbol: 'N', color: '#0F6', size: 3, mass: 14.0, electrons: 5 }
+        };
+
+        // Particle system
+        class Particle {
+            constructor(x, y, type = ELEMENT_TYPES.HYDROGEN) {
+                this.x = x || Math.random() * width;
+                this.y = y || Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.type = type;
+                this.size = type.size;
+                this.mass = type.mass;
+                this.energy = Math.random() * 10;
+                this.bonded = false;
+                this.molecule = null;
+                this.trail = [];
+                this.maxTrail = 10;
+            }
+
+            update(temperature, energyInput) {
+                if (this.bonded && this.molecule) {
+                    // Orbit around molecule center
+                    const angle = (Date.now() / 1000 + this.orbitalOffset) * this.orbitalSpeed;
+                    const radius = this.orbitalRadius;
+                    this.x = this.molecule.x + Math.cos(angle) * radius;
+                    this.y = this.molecule.y + Math.sin(angle) * radius;
+                    return;
+                }
+
+                // Temperature affects velocity
+                const tempFactor = temperature / 50;
+                
+                // Brownian motion
+                this.vx += (Math.random() - 0.5) * 0.5 * tempFactor;
+                this.vy += (Math.random() - 0.5) * 0.5 * tempFactor;
+                
+                // Energy input adds random kicks
+                if (Math.random() < energyInput / 1000) {
+                    this.vx += (Math.random() - 0.5) * 5;
+                    this.vy += (Math.random() - 0.5) * 5;
+                }
+                
+                // Damping
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+                
+                // Max velocity based on temperature
+                const maxVel = 2 + tempFactor * 3;
+                const vel = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (vel > maxVel) {
+                    this.vx = (this.vx / vel) * maxVel;
+                    this.vy = (this.vy / vel) * maxVel;
+                }
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Wrap around edges
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+                
+                // Update trail
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > this.maxTrail) {
+                    this.trail.shift();
+                }
+                
+                // Update energy based on velocity
+                this.energy = vel * 2;
+            }
+
+            draw() {
+                // Draw trail
+                if (this.trail.length > 1 && !this.bonded) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, 0.1)`;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw particle
+                if (this.bonded) {
+                    // Bonded atoms glow - use rgba for proper color handling
+                    const rgb = this.hexToRgb(this.type.color);
+                    
+                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+                    gradient.addColorStop(0, this.type.color);
+                    gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw core
+                    ctx.fillStyle = this.type.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Free particles
+                    ctx.fillStyle = this.type.color;
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                }
+            }
+
+            hexToRgb(hex) {
+                // Convert hex to RGB
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : {r: 255, g: 255, b: 255};
+            }
+        }
+
+        // Molecule class
+        class Molecule {
+            constructor(particles) {
+                this.particles = particles;
+                this.x = particles.reduce((sum, p) => sum + p.x, 0) / particles.length;
+                this.y = particles.reduce((sum, p) => sum + p.y, 0) / particles.length;
+                this.formed = Date.now();
+                this.stable = true;
+                
+                // Determine molecule type
+                this.type = this.getMoleculeType();
+                this.name = this.getMoleculeName();
+                
+                // Mark particles as bonded and set orbital positions
+                particles.forEach((p, i) => {
+                    p.bonded = true;
+                    p.molecule = this;
+                    p.orbitalRadius = 15 + Math.random() * 10;
+                    p.orbitalSpeed = 0.5 + Math.random() * 0.5;
+                    p.orbitalOffset = (i / particles.length) * Math.PI * 2;
+                    p.x = this.x;
+                    p.y = this.y;
+                });
+            }
+
+            getMoleculeType() {
+                const formula = this.particles
+                    .map(p => p.type.symbol)
+                    .sort()
+                    .join('');
+                
+                return formula;
+            }
+
+            getMoleculeName() {
+                const types = {
+                    'HH': 'H₂ (Hydrogen)',
+                    'HO': 'OH (Hydroxyl)',
+                    'HHO': 'H₂O (Water)',
+                    'CC': 'C₂ (Dicarbon)',
+                    'CO': 'CO (Carbon Monoxide)',
+                    'CCO': 'C₂O',
+                    'COO': 'CO₂ (Carbon Dioxide)',
+                    'NN': 'N₂ (Nitrogen)',
+                    'HN': 'NH',
+                    'HHN': 'NH₂',
+                    'HHHN': 'NH₃ (Ammonia)',
+                    'CN': 'CN (Cyanide)',
+                    'CHN': 'HCN',
+                    'NO': 'NO (Nitric Oxide)',
+                    'NNO': 'N₂O',
+                    'NOO': 'NO₂'
+                };
+                
+                return types[this.type] || this.type;
+            }
+
+            draw() {
+                const age = Date.now() - this.formed;
+                const pulseScale = 1 + Math.sin(age / 300) * 0.15;
+                
+                // Draw glow around molecule
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 40 * pulseScale);
+                gradient.addColorStop(0, 'rgba(0, 255, 255, 0.4)');
+                gradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.2)');
+                gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 40 * pulseScale, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw bonds between particles
+                ctx.strokeStyle = '#0FF';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.6;
+                for (let i = 0; i < this.particles.length; i++) {
+                    for (let j = i + 1; j < this.particles.length; j++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.particles[i].x, this.particles[i].y);
+                        ctx.lineTo(this.particles[j].x, this.particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+                ctx.globalAlpha = 1;
+                
+                // Draw molecule formula label
+                ctx.fillStyle = '#0FF';
+                ctx.font = 'bold 14px "Courier New"';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(this.type, this.x, this.y - 35);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Game state
+        let particles = [];
+        let molecules = [];
+        let moleculeTypes = new Map(); // Track unique molecule types
+        let collisionCount = 0;
+        let firstMoleculeFormed = false;
+        let isPaused = false;
+        let startTime = Date.now();
+        let elapsedTime = 0;
+        let pauseStartTime = 0;
+        let animationId = null;
+        let totalXP = 0;
+
+        // Achievement system
+        const ACHIEVEMENTS = {
+            first_molecule: {
+                id: 'first_molecule',
+                icon: '⚛️',
+                title: 'First Molecule',
+                description: 'Form your first stable molecule',
+                xp: 50,
+                unlocked: false,
+                check: () => molecules.length >= 1
+            },
+            hydrogen_factory: {
+                id: 'hydrogen_factory',
+                icon: '💨',
+                title: 'Hydrogen Factory',
+                description: 'Create 5 H₂ molecules',
+                xp: 75,
+                unlocked: false,
+                check: () => (moleculeTypes.get('H₂ (Hydrogen)') || 0) >= 5,
+                progress: () => Math.min(100, ((moleculeTypes.get('H₂ (Hydrogen)') || 0) / 5) * 100)
+            },
+            water_of_life: {
+                id: 'water_of_life',
+                icon: '💧',
+                title: 'Water of Life',
+                description: 'Successfully create H₂O (water)',
+                xp: 150,
+                unlocked: false,
+                check: () => moleculeTypes.has('H₂O (Water)')
+            },
+            radical_creator: {
+                id: 'radical_creator',
+                icon: '⚡',
+                title: 'Radical Creator',
+                description: 'Form an OH hydroxyl radical',
+                xp: 100,
+                unlocked: false,
+                check: () => moleculeTypes.has('OH (Hydroxyl)')
+            },
+            toxic_chemist: {
+                id: 'toxic_chemist',
+                icon: '☠️',
+                title: 'Toxic Chemist',
+                description: 'Create CN cyanide',
+                xp: 125,
+                unlocked: false,
+                check: () => moleculeTypes.has('CN (Cyanide)')
+            },
+            ammonia_maker: {
+                id: 'ammonia_maker',
+                icon: '🧪',
+                title: 'Ammonia Maker',
+                description: 'Synthesize NH₃ (ammonia)',
+                xp: 150,
+                unlocked: false,
+                check: () => moleculeTypes.has('NH₃ (Ammonia)')
+            },
+            molecular_diversity: {
+                id: 'molecular_diversity',
+                icon: '🌈',
+                title: 'Molecular Diversity',
+                description: 'Create 5 different molecule types',
+                xp: 200,
+                unlocked: false,
+                check: () => moleculeTypes.size >= 5,
+                progress: () => Math.min(100, (moleculeTypes.size / 5) * 100)
+            },
+            speed_demon: {
+                id: 'speed_demon',
+                icon: '🔥',
+                title: 'Speed Demon',
+                description: 'Reach 50,000 collisions',
+                xp: 100,
+                unlocked: false,
+                check: () => collisionCount >= 50000,
+                progress: () => Math.min(100, (collisionCount / 50000) * 100)
+            },
+            molecular_factory: {
+                id: 'molecular_factory',
+                icon: '🏭',
+                title: 'Molecular Factory',
+                description: 'Form 20 molecules total',
+                xp: 150,
+                unlocked: false,
+                check: () => molecules.length >= 20,
+                progress: () => Math.min(100, (molecules.length / 20) * 100)
+            },
+            thermodynamist: {
+                id: 'thermodynamist',
+                icon: '🌡️',
+                title: 'Thermodynamist',
+                description: 'Find the perfect temperature (45-55) and hold for 30s',
+                xp: 100,
+                unlocked: false,
+                check: () => false // Special tracking needed
+            },
+            patient_chemist: {
+                id: 'patient_chemist',
+                icon: '⏱️',
+                title: 'Patient Chemist',
+                description: 'Run simulation for 5 minutes',
+                xp: 75,
+                unlocked: false,
+                check: () => getElapsedTime() >= 300000,
+                progress: () => Math.min(100, (getElapsedTime() / 300000) * 100)
+            },
+            carbon_dioxide: {
+                id: 'carbon_dioxide',
+                icon: '🫧',
+                title: 'Carbon Dioxide',
+                description: 'Create CO₂',
+                xp: 125,
+                unlocked: false,
+                check: () => moleculeTypes.has('CO₂ (Carbon Dioxide)')
+            },
+            nitrogen_gas: {
+                id: 'nitrogen_gas',
+                icon: '💨',
+                title: 'Nitrogen Gas',
+                description: 'Form N₂',
+                xp: 100,
+                unlocked: false,
+                check: () => moleculeTypes.has('N₂ (Nitrogen)')
+            },
+            prebiotic_soup: {
+                id: 'prebiotic_soup',
+                icon: '🧬',
+                title: 'Prebiotic Soup',
+                description: 'Create H₂O, NH₃, and HCN (building blocks of life)',
+                xp: 300,
+                unlocked: false,
+                check: () => moleculeTypes.has('H₂O (Water)') && 
+                           moleculeTypes.has('NH₃ (Ammonia)') && 
+                           moleculeTypes.has('HCN')
+            },
+            master_chemist: {
+                id: 'master_chemist',
+                icon: '👨‍🔬',
+                title: 'Master Chemist',
+                description: 'Unlock all other achievements',
+                xp: 500,
+                unlocked: false,
+                check: () => {
+                    const others = Object.keys(ACHIEVEMENTS).filter(id => id !== 'master_chemist');
+                    return others.every(id => ACHIEVEMENTS[id].unlocked);
+                }
+            }
+        };
+
+        // Achievement help data
+        const ACHIEVEMENT_HELP = {
+            first_molecule: {
+                description: "Form your first stable molecule from colliding particles.",
+                strategy: [
+                    "Start with moderate temperature (45-55°K)",
+                    "Keep energy input around 20-30 for stable conditions",
+                    "Higher density increases collision chances",
+                    "Be patient - first molecule usually forms within 30 seconds"
+                ],
+                parameters: {
+                    temperature: "45-55°K",
+                    density: "150-250",
+                    energy: "20-30"
+                },
+                formula: "Any two-element combination"
+            },
+            hydrogen_factory: {
+                description: "Create 5 H₂ (hydrogen) molecules - the most abundant molecule in the universe.",
+                strategy: [
+                    "Focus on hydrogen-hydrogen collisions",
+                    "Moderate temperatures work best (40-60°K)",
+                    "Higher hydrogen concentration helps",
+                    "H₂ forms easily under most conditions"
+                ],
+                parameters: {
+                    temperature: "40-60°K",
+                    density: "200+",
+                    energy: "15-35"
+                },
+                formula: "H + H → H₂"
+            },
+            water_of_life: {
+                description: "Successfully create H₂O (water) - the essential molecule for life.",
+                strategy: [
+                    "Need both hydrogen and oxygen particles",
+                    "Optimal temperature: 50-65°K",
+                    "Balance element ratios (2:1 H:O ideal)",
+                    "Watch for H + O → OH first, then OH + H → H₂O"
+                ],
+                parameters: {
+                    temperature: "50-65°K",
+                    density: "200-300",
+                    energy: "25-40"
+                },
+                formula: "2H + O → H₂O"
+            },
+            radical_creator: {
+                description: "Form an OH hydroxyl radical - a highly reactive molecule important in chemistry.",
+                strategy: [
+                    "Hydrogen and oxygen collisions",
+                    "Slightly higher temperatures help (55-70°K)",
+                    "Moderate energy input (25-45)",
+                    "OH often forms before H₂O"
+                ],
+                parameters: {
+                    temperature: "55-70°K",
+                    density: "150-250",
+                    energy: "25-45"
+                },
+                formula: "H + O → OH"
+            },
+            toxic_chemist: {
+                description: "Create CN cyanide - a simple but toxic organic molecule.",
+                strategy: [
+                    "Carbon and nitrogen collisions required",
+                    "Moderate temperatures (45-65°K)",
+                    "Both elements needed in simulation",
+                    "Can be rare depending on element distribution"
+                ],
+                parameters: {
+                    temperature: "45-65°K",
+                    density: "200-300",
+                    energy: "20-40"
+                },
+                formula: "C + N → CN"
+            },
+            ammonia_maker: {
+                description: "Synthesize NH₃ (ammonia) - important for fertilizers and prebiotic chemistry.",
+                strategy: [
+                    "Requires nitrogen and hydrogen",
+                    "Optimal ratio: 1N:3H",
+                    "Moderate temperatures (50-70°K)",
+                    "Forms through intermediate steps (NH → NH₂ → NH₃)"
+                ],
+                parameters: {
+                    temperature: "50-70°K",
+                    density: "250-350",
+                    energy: "30-50"
+                },
+                formula: "N + 3H → NH₃"
+            },
+            molecular_diversity: {
+                description: "Create 5 different molecule types - demonstrating chemical variety.",
+                strategy: [
+                    "Ensure all element types are present",
+                    "Experiment with different temperatures",
+                    "Higher density increases variety chances",
+                    "Track progress in Molecules panel"
+                ],
+                parameters: {
+                    temperature: "Vary 40-70°K",
+                    density: "250+",
+                    energy: "25-45"
+                },
+                formula: "Multiple combinations"
+            },
+            speed_demon: {
+                description: "Reach 50,000 particle collisions - mastering high-energy conditions.",
+                strategy: [
+                    "High density increases collision rate",
+                    "Higher temperatures increase particle speed",
+                    "More energy input creates more activity",
+                    "Be patient - this takes time to accumulate"
+                ],
+                parameters: {
+                    temperature: "60-80°K",
+                    density: "300+",
+                    energy: "40-60"
+                },
+                formula: "Accumulated collisions"
+            },
+            molecular_factory: {
+                description: "Form 20 molecules total - becoming a proficient molecular architect.",
+                strategy: [
+                    "Stable conditions help accumulation",
+                    "Moderate parameters work best",
+                    "Avoid extreme temperatures that break bonds",
+                    "Higher density speeds up production"
+                ],
+                parameters: {
+                    temperature: "45-65°K",
+                    density: "200-300",
+                    energy: "20-40"
+                },
+                formula: "Cumulative production"
+            },
+            thermodynamist: {
+                description: "Find the perfect temperature (45-55°K) and maintain it for 30 seconds.",
+                strategy: [
+                    "Use temperature slider carefully",
+                    "Watch for optimal bonding conditions",
+                    "Avoid sudden changes",
+                    "Monitor molecule formation rate"
+                ],
+                parameters: {
+                    temperature: "45-55°K",
+                    density: "Any",
+                    energy: "Any"
+                },
+                formula: "Temperature stability"
+            },
+            patient_chemist: {
+                description: "Run simulation for 5 minutes - good science takes time!",
+                strategy: [
+                    "Let the simulation run continuously",
+                    "Observe long-term patterns",
+                    "Make gradual parameter adjustments",
+                    "Watch the evolution of molecular complexity"
+                ],
+                parameters: {
+                    temperature: "Any",
+                    density: "Any",
+                    energy: "Any"
+                },
+                formula: "Time accumulation"
+            },
+            carbon_dioxide: {
+                description: "Create CO₂ - essential for plant life and a key greenhouse gas.",
+                strategy: [
+                    "Carbon and oxygen collisions",
+                    "Higher temperatures help (60-75°K)",
+                    "Often forms via CO intermediate",
+                    "Watch for C + O₂ → CO₂ or C + 2O → CO₂"
+                ],
+                parameters: {
+                    temperature: "60-75°K",
+                    density: "200-300",
+                    energy: "30-50"
+                },
+                formula: "C + O₂ → CO₂ or C + 2O → CO₂"
+            },
+            nitrogen_gas: {
+                description: "Form N₂ - making up 78% of Earth's atmosphere.",
+                strategy: [
+                    "Nitrogen-nitrogen collisions",
+                    "Moderate conditions work well",
+                    "Very stable once formed",
+                    "Common in nitrogen-rich environments"
+                ],
+                parameters: {
+                    temperature: "40-65°K",
+                    density: "200-300",
+                    energy: "20-40"
+                },
+                formula: "N + N → N₂"
+            },
+            prebiotic_soup: {
+                description: "Create H₂O, NH₃, and HCN - the building blocks of life.",
+                strategy: [
+                    "Most challenging achievement!",
+                    "Need all element types present",
+                    "Balance parameters carefully",
+                    "May require multiple parameter adjustments",
+                    "Focus on one molecule at a time"
+                ],
+                parameters: {
+                    temperature: "50-70°K",
+                    density: "250-350",
+                    energy: "30-50"
+                },
+                formula: "H₂O + NH₃ + HCN"
+            },
+            master_chemist: {
+                description: "Unlock all other achievements - becoming a true molecular master.",
+                strategy: [
+                    "Systematically work through each achievement",
+                    "Use the help information for each one",
+                    "Track your progress in this panel",
+                    "Experiment and learn from each simulation",
+                    "Patience and observation are key"
+                ],
+                parameters: {
+                    temperature: "All ranges",
+                    density: "All ranges",
+                    energy: "All ranges"
+                },
+                formula: "Complete all challenges"
+            }
+        };
+
+        let achievementsUnlocked = new Set();
+
+        // History tracking for export
+        let simulationHistory = {
+            startTime: new Date().toISOString(),
+            events: [],
+            snapshots: [],
+            achievements: []
+        };
+
+        // Controls
+        let temperature = 50;
+        let density = 150;
+        let energyInput = 20;
+
+        document.getElementById('temperature').addEventListener('input', (e) => {
+            temperature = parseInt(e.target.value);
+            document.getElementById('temp-value').textContent = temperature;
+            
+            simulationHistory.events.push({
+                time: getElapsedTime(),
+                type: 'parameter_change',
+                parameter: 'temperature',
+                value: temperature
+            });
+        });
+
+        document.getElementById('density').addEventListener('input', (e) => {
+            density = parseInt(e.target.value);
+            document.getElementById('density-value').textContent = density;
+            adjustParticleCount();
+            
+            simulationHistory.events.push({
+                time: getElapsedTime(),
+                type: 'parameter_change',
+                parameter: 'density',
+                value: density
+            });
+        });
+
+        document.getElementById('energy').addEventListener('input', (e) => {
+            energyInput = parseInt(e.target.value);
+            document.getElementById('energy-value').textContent = energyInput;
+            
+            simulationHistory.events.push({
+                time: getElapsedTime(),
+                type: 'parameter_change',
+                parameter: 'energy',
+                value: energyInput
+            });
+        });
+
+        function adjustParticleCount() {
+            while (particles.length < density) {
+                // Weighted distribution: more H, less heavy elements
+                const rand = Math.random();
+                let type;
+                if (rand < 0.70) type = ELEMENT_TYPES.HYDROGEN;
+                else if (rand < 0.85) type = ELEMENT_TYPES.CARBON;
+                else if (rand < 0.95) type = ELEMENT_TYPES.OXYGEN;
+                else type = ELEMENT_TYPES.NITROGEN;
+                
+                particles.push(new Particle(null, null, type));
+            }
+            while (particles.length > density) {
+                const p = particles.pop();
+                if (p && p.bonded) {
+                    particles.push(p); // Don't remove bonded particles
+                    break;
+                }
+            }
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorial').style.display = 'none';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pause-btn');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            if (isPaused) {
+                pauseBtn.textContent = '▶ RESUME';
+                statusDot.className = 'status-dot paused';
+                statusText.textContent = 'PAUSED';
+                pauseStartTime = Date.now();
+                
+                simulationHistory.events.push({
+                    time: getElapsedTime(),
+                    type: 'paused',
+                    particles: particles.length,
+                    molecules: molecules.length
+                });
+            } else {
+                pauseBtn.textContent = '⏸ PAUSE';
+                statusDot.className = 'status-dot';
+                statusText.textContent = 'RUNNING';
+                
+                const pauseDuration = Date.now() - pauseStartTime;
+                startTime += pauseDuration;
+                
+                simulationHistory.events.push({
+                    time: getElapsedTime(),
+                    type: 'resumed',
+                    particles: particles.length,
+                    molecules: molecules.length
+                });
+            }
+        }
+
+        function resetSimulation() {
+            if (!confirm('Reset simulation? This will clear all progress.')) {
+                return;
+            }
+            
+            particles = [];
+            molecules = [];
+            moleculeTypes.clear();
+            collisionCount = 0;
+            firstMoleculeFormed = false;
+            isPaused = false;
+            startTime = Date.now();
+            elapsedTime = 0;
+            
+            document.getElementById('pause-btn').textContent = '⏸ PAUSE';
+            document.getElementById('status-dot').className = 'status-dot';
+            document.getElementById('status-text').textContent = 'RUNNING';
+            document.getElementById('level-progress').style.width = '0%';
+            
+            simulationHistory = {
+                startTime: new Date().toISOString(),
+                events: [{
+                    time: 0,
+                    type: 'reset',
+                    temperature,
+                    density,
+                    energyInput
+                }],
+                snapshots: []
+            };
+            
+            adjustParticleCount();
+            updateMoleculeList();
+        }
+
+        function getElapsedTime() {
+            if (isPaused) {
+                return elapsedTime;
+            }
+            elapsedTime = Date.now() - startTime;
+            return elapsedTime;
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            const elapsed = getElapsedTime();
+            document.getElementById('timer').textContent = formatTime(elapsed);
+        }
+
+        function updateMoleculeList() {
+            const listDiv = document.getElementById('molecule-types');
+            if (moleculeTypes.size === 0) {
+                listDiv.innerHTML = '<em style="opacity: 0.5;">None yet...</em>';
+            } else {
+                listDiv.innerHTML = Array.from(moleculeTypes.entries())
+                    .map(([type, count]) => `<div class="molecule-item">${type}: ${count}</div>`)
+                    .join('');
+            }
+        }
+
+        function exportData() {
+            const exportData = {
+                metadata: {
+                    exportTime: new Date().toISOString(),
+                    totalRunTime: formatTime(getElapsedTime()),
+                    version: '2.0.0',
+                    totalXP: totalXP
+                },
+                parameters: {
+                    temperature,
+                    density,
+                    energyInput
+                },
+                statistics: {
+                    totalParticles: particles.length,
+                    totalMolecules: molecules.length,
+                    uniqueMoleculeTypes: moleculeTypes.size,
+                    moleculeBreakdown: Object.fromEntries(moleculeTypes),
+                    totalCollisions: collisionCount,
+                    averageEnergy: particles.reduce((sum, p) => sum + p.energy, 0) / particles.length || 0
+                },
+                achievements: {
+                    unlocked: Array.from(achievementsUnlocked),
+                    total: Object.keys(ACHIEVEMENTS).length,
+                    percentage: Math.round((achievementsUnlocked.size / Object.keys(ACHIEVEMENTS).length) * 100),
+                    details: Object.values(ACHIEVEMENTS).map(a => ({
+                        id: a.id,
+                        title: a.title,
+                        unlocked: a.unlocked,
+                        xp: a.xp
+                    }))
+                },
+                history: simulationHistory,
+                currentState: {
+                    particles: particles.map(p => ({
+                        x: p.x,
+                        y: p.y,
+                        type: p.type.symbol,
+                        bonded: p.bonded
+                    })),
+                    molecules: molecules.map(m => ({
+                        type: m.type,
+                        name: m.name,
+                        particleCount: m.particles.length,
+                        age: Date.now() - m.formed
+                    }))
+                }
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `atomicforge_${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            simulationHistory.events.push({
+                time: getElapsedTime(),
+                type: 'exported',
+                format: 'json'
+            });
+        }
+
+        function exportImage() {
+            const wasPaused = isPaused;
+            if (!wasPaused) {
+                isPaused = true;
+            }
+            
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = width;
+            exportCanvas.height = height;
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            exportCtx.fillStyle = '#000';
+            exportCtx.fillRect(0, 0, width, height);
+            
+            // Draw molecules first
+            for (let molecule of molecules) {
+                const age = Date.now() - molecule.formed;
+                const pulseScale = 1 + Math.sin(age / 300) * 0.15;
+                
+                const gradient = exportCtx.createRadialGradient(molecule.x, molecule.y, 0, molecule.x, molecule.y, 40 * pulseScale);
+                gradient.addColorStop(0, 'rgba(0, 255, 255, 0.4)');
+                gradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.2)');
+                gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+                exportCtx.fillStyle = gradient;
+                exportCtx.beginPath();
+                exportCtx.arc(molecule.x, molecule.y, 40 * pulseScale, 0, Math.PI * 2);
+                exportCtx.fill();
+                
+                exportCtx.strokeStyle = '#0FF';
+                exportCtx.lineWidth = 2;
+                exportCtx.globalAlpha = 0.6;
+                for (let i = 0; i < molecule.particles.length; i++) {
+                    for (let j = i + 1; j < molecule.particles.length; j++) {
+                        exportCtx.beginPath();
+                        exportCtx.moveTo(molecule.particles[i].x, molecule.particles[i].y);
+                        exportCtx.lineTo(molecule.particles[j].x, molecule.particles[j].y);
+                        exportCtx.stroke();
+                    }
+                }
+                exportCtx.globalAlpha = 1;
+                
+                exportCtx.fillStyle = '#0FF';
+                exportCtx.font = 'bold 14px "Courier New"';
+                exportCtx.textAlign = 'center';
+                exportCtx.fillText(molecule.type, molecule.x, molecule.y - 35);
+            }
+            
+            // Draw particles
+            for (let particle of particles) {
+                if (particle.bonded) {
+                    // Convert hex to rgb for proper alpha handling
+                    const hex = particle.type.color;
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    const rgb = result ? {
+                        r: parseInt(result[1], 16),
+                        g: parseInt(result[2], 16),
+                        b: parseInt(result[3], 16)
+                    } : {r: 255, g: 255, b: 255};
+                    
+                    const gradient = exportCtx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, particle.size * 3);
+                    gradient.addColorStop(0, particle.type.color);
+                    gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`);
+                    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                    exportCtx.fillStyle = gradient;
+                    exportCtx.beginPath();
+                    exportCtx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2);
+                    exportCtx.fill();
+                    
+                    exportCtx.fillStyle = particle.type.color;
+                    exportCtx.beginPath();
+                    exportCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    exportCtx.fill();
+                } else {
+                    exportCtx.fillStyle = particle.type.color;
+                    exportCtx.fillRect(particle.x - particle.size/2, particle.y - particle.size/2, particle.size, particle.size);
+                }
+            }
+            
+            // Add metadata overlay
+            exportCtx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            exportCtx.fillRect(10, 10, 350, 120);
+            exportCtx.strokeStyle = '#0FF';
+            exportCtx.lineWidth = 2;
+            exportCtx.strokeRect(10, 10, 350, 120);
+            
+            exportCtx.fillStyle = '#0FF';
+            exportCtx.font = 'bold 16px "Courier New"';
+            exportCtx.textAlign = 'left';
+            exportCtx.fillText('ATOMICFORGE - Level 0', 20, 35);
+            exportCtx.font = '14px "Courier New"';
+            exportCtx.fillText(`Time: ${formatTime(getElapsedTime())}`, 20, 60);
+            exportCtx.fillText(`Particles: ${particles.length} | Molecules: ${molecules.length}`, 20, 80);
+            exportCtx.fillText(`Unique Types: ${moleculeTypes.size}`, 20, 100);
+            exportCtx.fillText(`Temp: ${temperature}°K | Density: ${density}`, 20, 120);
+            
+            exportCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `atomicforge_${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                if (!wasPaused) {
+                    isPaused = false;
+                }
+                
+                simulationHistory.events.push({
+                    time: getElapsedTime(),
+                    type: 'exported',
+                    format: 'image'
+                });
+            });
+        }
+
+        function showAchievement(moleculeName) {
+            if (firstMoleculeFormed) return;
+            firstMoleculeFormed = true;
+            
+            const achievement = document.getElementById('achievement');
+            const desc = document.getElementById('achievement-desc');
+            desc.innerHTML = `From chaos, order emerges.<br>You have formed ${moleculeName}!`;
+            achievement.classList.add('show');
+            
+            document.getElementById('level-progress').style.width = '33%';
+            
+            simulationHistory.events.push({
+                time: getElapsedTime(),
+                type: 'first_molecule',
+                molecule: moleculeName
+            });
+            
+            setTimeout(() => {
+                achievement.classList.remove('show');
+            }, 4000);
+        }
+
+        function canBond(p1, p2) {
+            // Simple bonding rules based on element types
+            const bond = [p1.type.symbol, p2.type.symbol].sort().join('-');
+            
+            // Define allowed bonds
+            const allowedBonds = [
+                'H-H', 'H-C', 'H-O', 'H-N',
+                'C-C', 'C-O', 'C-N',
+                'O-O', 'N-N', 'N-O'
+            ];
+            
+            return allowedBonds.includes(bond);
+        }
+
+        function checkCollisions() {
+            for (let i = 0; i < particles.length; i++) {
+                if (particles[i].bonded) continue;
+                
+                for (let j = i + 1; j < particles.length; j++) {
+                    if (particles[j].bonded) continue;
+                    
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const collisionDist = particles[i].size + particles[j].size + 2;
+                    
+                    if (dist < collisionDist) {
+                        collisionCount++;
+                        
+                        // Collision flash
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.beginPath();
+                        ctx.arc(particles[i].x, particles[i].y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Check for bonding
+                        if (canBond(particles[i], particles[j]) &&
+                            temperature > 30 && temperature < 70 &&
+                            Math.random() < 0.008) {
+                            
+                            // Form molecule!
+                            const molecule = new Molecule([particles[i], particles[j]]);
+                            molecules.push(molecule);
+                            
+                            // Track molecule types
+                            const count = moleculeTypes.get(molecule.name) || 0;
+                            moleculeTypes.set(molecule.name, count + 1);
+                            updateMoleculeList();
+                            
+                            if (!firstMoleculeFormed) {
+                                showAchievement(molecule.name);
+                            }
+                            
+                            // Update progress bar
+                            const progress = Math.min(100, (molecules.length / 10) * 100);
+                            document.getElementById('level-progress').style.width = progress + '%';
+                            
+                            simulationHistory.events.push({
+                                time: getElapsedTime(),
+                                type: 'molecule_formed',
+                                moleculeType: molecule.type,
+                                moleculeName: molecule.name
+                            });
+                        } else {
+                            // Elastic collision
+                            const angle = Math.atan2(dy, dx);
+                            const sin = Math.sin(angle);
+                            const cos = Math.cos(angle);
+                            
+                            const vx1 = particles[i].vx * cos + particles[i].vy * sin;
+                            const vy1 = particles[i].vy * cos - particles[i].vx * sin;
+                            const vx2 = particles[j].vx * cos + particles[j].vy * sin;
+                            const vy2 = particles[j].vy * cos - particles[j].vx * sin;
+                            
+                            // Mass-based collision
+                            const m1 = particles[i].mass;
+                            const m2 = particles[j].mass;
+                            const vx1_final = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2);
+                            const vx2_final = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2);
+                            
+                            particles[i].vx = vx1_final * cos - vy1 * sin;
+                            particles[i].vy = vy1 * cos + vx1_final * sin;
+                            particles[j].vx = vx2_final * cos - vy2 * sin;
+                            particles[j].vy = vy2 * cos + vx2_final * sin;
+                            
+                            // Separate particles
+                            const overlap = collisionDist - dist;
+                            const separateX = (dx / dist) * overlap * 0.5;
+                            const separateY = (dy / dist) * overlap * 0.5;
+                            particles[i].x += separateX;
+                            particles[i].y += separateY;
+                            particles[j].x -= separateX;
+                            particles[j].y -= separateY;
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('particle-count').textContent = particles.length;
+            document.getElementById('molecule-count').textContent = molecules.length;
+            document.getElementById('unique-molecules').textContent = moleculeTypes.size;
+            document.getElementById('collision-count').textContent = collisionCount;
+            
+            const freeParticles = particles.filter(p => !p.bonded);
+            const avgEnergy = freeParticles.length > 0 
+                ? freeParticles.reduce((sum, p) => sum + p.energy, 0) / freeParticles.length
+                : 0;
+            document.getElementById('avg-energy').textContent = avgEnergy.toFixed(1);
+        }
+
+        // Animation loop
+        let lastSnapshotTime = 0;
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            updateTimer();
+            
+            if (isPaused) return;
+            
+            // Take periodic snapshots
+            const currentTime = getElapsedTime();
+            if (currentTime - lastSnapshotTime > 10000) {
+                simulationHistory.snapshots.push({
+                    time: currentTime,
+                    particles: particles.length,
+                    molecules: molecules.length,
+                    uniqueTypes: moleculeTypes.size,
+                    collisions: collisionCount,
+                    temperature,
+                    density,
+                    energyInput
+                });
+                lastSnapshotTime = currentTime;
+            }
+            
+            // Clear with trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Update and draw particles
+            for (let particle of particles) {
+                particle.update(temperature, energyInput);
+                particle.draw();
+            }
+
+            // Check collisions
+            checkCollisions();
+
+            // Draw molecules
+            for (let molecule of molecules) {
+                molecule.draw();
+            }
+
+            // Update stats
+            updateStats();
+            
+            // Check achievements every frame
+            checkAchievements();
+        }
+
+        // ACHIEVEMENT HELP FUNCTIONS
+        function showAchievementHelp(achievementId) {
+            const help = ACHIEVEMENT_HELP[achievementId];
+            const achievement = ACHIEVEMENTS[achievementId];
+            
+            if (!help) return;
+
+            // Update help content
+            document.getElementById('help-icon').textContent = achievement.icon;
+            document.getElementById('help-title').textContent = achievement.title;
+            document.getElementById('help-xp').textContent = `+${achievement.xp} XP`;
+            document.getElementById('help-description').textContent = help.description;
+            
+            // Update progress
+            updateHelpProgress(achievementId);
+            
+            // Update strategy
+            const strategyList = document.getElementById('strategy-list');
+            strategyList.innerHTML = help.strategy.map(item => `<li>${item}</li>`).join('');
+            
+            // Update parameters
+            const paramsDiv = document.getElementById('parameter-recommendations');
+            paramsDiv.innerHTML = `
+                <div class="param-item">
+                    <div class="param-label">Temperature</div>
+                    <div class="param-value">${help.parameters.temperature}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Density</div>
+                    <div class="param-value">${help.parameters.density}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Energy</div>
+                    <div class="param-value">${help.parameters.energy}</div>
+                </div>
+            `;
+            
+            // Update formula
+            document.getElementById('molecule-formula').textContent = help.formula;
+            
+            // Show/hide sections based on achievement type
+            const hintTip = document.getElementById('hint-tip');
+            
+            // Special cases
+            if (achievementId === 'thermodynamist') {
+                hintTip.textContent = "💡 Use small adjustments and watch the temperature value carefully!";
+            } else if (achievementId === 'patient_chemist') {
+                hintTip.textContent = "💡 Let the simulation run in the background while you observe the patterns!";
+            } else if (achievementId === 'master_chemist') {
+                hintTip.textContent = "💡 Check each achievement's help for specific strategies!";
+            } else {
+                hintTip.textContent = "💡 Adjust parameters gradually and observe the results!";
+            }
+            
+            // Show the help panel
+            document.getElementById('achievement-help').classList.add('show');
+        }
+
+        function updateHelpProgress(achievementId) {
+            const achievement = ACHIEVEMENTS[achievementId];
+            const progressInfo = document.getElementById('progress-info');
+            const progressBar = document.getElementById('help-progress-bar');
+            
+            if (achievement.unlocked) {
+                progressInfo.textContent = "✅ Achievement Unlocked!";
+                progressBar.style.width = "100%";
+                return;
+            }
+            
+            // Calculate current progress
+            let current = 0;
+            let target = 1;
+            let progressText = "";
+            
+            switch(achievementId) {
+                case 'hydrogen_factory':
+                    current = moleculeTypes.get('H₂ (Hydrogen)') || 0;
+                    target = 5;
+                    progressText = `${current}/5 H₂ molecules formed`;
+                    break;
+                case 'molecular_diversity':
+                    current = moleculeTypes.size;
+                    target = 5;
+                    progressText = `${current}/5 unique molecule types`;
+                    break;
+                case 'speed_demon':
+                    current = collisionCount;
+                    target = 50000;
+                    progressText = `${current.toLocaleString()}/50,000 collisions`;
+                    break;
+                case 'molecular_factory':
+                    current = molecules.length;
+                    target = 20;
+                    progressText = `${current}/20 total molecules`;
+                    break;
+                case 'patient_chemist':
+                    current = getElapsedTime();
+                    target = 300000; // 5 minutes in milliseconds
+                    const minutes = Math.floor(current / 60000);
+                    const seconds = Math.floor((current % 60000) / 1000);
+                    progressText = `${minutes}m ${seconds}s / 5m 0s`;
+                    break;
+                case 'water_of_life':
+                    current = moleculeTypes.has('H₂O (Water)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "H₂O formed!" : "H₂O not yet formed";
+                    break;
+                case 'radical_creator':
+                    current = moleculeTypes.has('OH (Hydroxyl)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "OH formed!" : "OH not yet formed";
+                    break;
+                case 'toxic_chemist':
+                    current = moleculeTypes.has('CN (Cyanide)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "CN formed!" : "CN not yet formed";
+                    break;
+                case 'ammonia_maker':
+                    current = moleculeTypes.has('NH₃ (Ammonia)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "NH₃ formed!" : "NH₃ not yet formed";
+                    break;
+                case 'carbon_dioxide':
+                    current = moleculeTypes.has('CO₂ (Carbon Dioxide)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "CO₂ formed!" : "CO₂ not yet formed";
+                    break;
+                case 'nitrogen_gas':
+                    current = moleculeTypes.has('N₂ (Nitrogen)') ? 1 : 0;
+                    target = 1;
+                    progressText = current ? "N₂ formed!" : "N₂ not yet formed";
+                    break;
+                case 'prebiotic_soup':
+                    const hasWater = moleculeTypes.has('H₂O (Water)');
+                    const hasAmmonia = moleculeTypes.has('NH₃ (Ammonia)');
+                    const hasCyanide = moleculeTypes.has('HCN');
+                    current = (hasWater ? 1 : 0) + (hasAmmonia ? 1 : 0) + (hasCyanide ? 1 : 0);
+                    target = 3;
+                    progressText = `Building blocks: ${hasWater ? 'H₂O' : ''} ${hasAmmonia ? 'NH₃' : ''} ${hasCyanide ? 'HCN' : ''}`.trim() || "None formed yet";
+                    break;
+                case 'master_chemist':
+                    const unlocked = Object.values(ACHIEVEMENTS).filter(a => a.unlocked && a.id !== 'master_chemist').length;
+                    current = unlocked;
+                    target = Object.keys(ACHIEVEMENTS).length - 1;
+                    progressText = `${unlocked}/${target} achievements unlocked`;
+                    break;
+                default:
+                    progressText = "Track your progress above";
+            }
+            
+            const progressPercent = Math.min(100, (current / target) * 100);
+            
+            progressInfo.textContent = progressText;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function closeHelp() {
+            document.getElementById('achievement-help').classList.remove('show');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                case 'p':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'r':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        resetSimulation();
+                    }
+                    break;
+                case 's':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        exportData();
+                    }
+                    break;
+                case 'i':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        exportImage();
+                    }
+                    break;
+                case 'e':
+                    // Toggle element key
+                    toggleElementKey();
+                    break;
+                case 'm':
+                    // Toggle molecule list
+                    toggleMoleculeList();
+                    break;
+                case 'a':
+                    // Toggle achievements
+                    toggleAchievements();
+                    break;
+                case 'h':
+                    // Achievement help (when viewing achievements)
+                    if (!document.getElementById('achievements-panel').classList.contains('minimized')) {
+                        e.preventDefault();
+                        // Show help for first locked achievement or master chemist
+                        const lockedAchievements = Object.values(ACHIEVEMENTS).filter(a => !a.unlocked);
+                        if (lockedAchievements.length > 0) {
+                            showAchievementHelp(lockedAchievements[0].id);
+                        } else {
+                            showAchievementHelp('master_chemist');
+                        }
+                    }
+                    break;
+            }
+        });
+
+        // Toggle functions for panels
+        function toggleElementKey() {
+            const panel = document.getElementById('element-key');
+            const icon = document.getElementById('element-toggle');
+            panel.classList.toggle('minimized');
+            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+        }
+
+        function toggleMoleculeList() {
+            const panel = document.getElementById('molecule-list');
+            const icon = document.getElementById('molecule-toggle');
+            panel.classList.toggle('minimized');
+            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+        }
+
+        function toggleAchievements() {
+            const panel = document.getElementById('achievements-panel');
+            const icon = document.getElementById('achievements-toggle');
+            panel.classList.toggle('minimized');
+            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+        }
+
+        function checkAchievements() {
+            for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
+                if (!achievement.unlocked && achievement.check()) {
+                    unlockAchievement(id);
+                }
+            }
+            updateAchievementsDisplay();
+        }
+
+        function unlockAchievement(id) {
+            const achievement = ACHIEVEMENTS[id];
+            if (achievement.unlocked) return;
+            
+            achievement.unlocked = true;
+            achievementsUnlocked.add(id);
+            totalXP += achievement.xp;
+            
+            // Log to history
+            simulationHistory.achievements.push({
+                time: getElapsedTime(),
+                id: id,
+                title: achievement.title,
+                xp: achievement.xp
+            });
+            
+            // Show popup
+            showAchievementPopup(achievement);
+            
+            // Update display
+            updateAchievementsDisplay();
+        }
+
+        function showAchievementPopup(achievement) {
+            const popup = document.getElementById('achievement-popup');
+            document.getElementById('popup-icon').textContent = achievement.icon;
+            document.getElementById('popup-title').textContent = 'Achievement Unlocked!';
+            document.getElementById('popup-subtitle').textContent = achievement.title;
+            document.getElementById('popup-desc').textContent = achievement.description;
+            document.getElementById('popup-xp').textContent = `+${achievement.xp} XP`;
+            
+            popup.classList.add('show');
+            
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 4000);
+        }
+
+        function updateAchievementsDisplay() {
+            const unlockedCount = Object.values(ACHIEVEMENTS).filter(a => a.unlocked).length;
+            const totalCount = Object.keys(ACHIEVEMENTS).length;
+            const percentage = Math.round((unlockedCount / totalCount) * 100);
+            
+            document.getElementById('achievement-count').textContent = `${unlockedCount} / ${totalCount} Unlocked`;
+            document.getElementById('achievement-percent').textContent = `${percentage}% Complete`;
+            
+            const listDiv = document.getElementById('achievements-list');
+            listDiv.innerHTML = Object.values(ACHIEVEMENTS).map(achievement => {
+                const locked = !achievement.unlocked;
+                const progressHTML = achievement.progress && locked ? 
+                    `<div class="achievement-progress">
+                        Progress: ${Math.round(achievement.progress())}%
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${achievement.progress()}%"></div>
+                        </div>
+                    </div>` : '';
+                
+                return `
+                    <div class="achievement-item ${locked ? 'locked' : 'unlocked'} clickable" 
+                         onclick="showAchievementHelp('${achievement.id}')">
+                        <div class="achievement-header">
+                            <span class="achievement-icon">${achievement.icon}</span>
+                            <span class="achievement-title">${achievement.title}</span>
+                            <span class="achievement-status ${locked ? 'locked' : 'unlocked'}">
+                                ${locked ? '🔒' : '✓'}
+                            </span>
+                        </div>
+                        <div class="achievement-desc">${achievement.description}</div>
+                        ${progressHTML}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Close help when clicking outside (optional)
+        document.addEventListener('click', (e) => {
+            const helpPanel = document.getElementById('achievement-help');
+            if (e.target === helpPanel) {
+                closeHelp();
+            }
+        });
+
+        // Close help with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeHelp();
+            }
+        });
+
+        // Initialize achievements display
+        updateAchievementsDisplay();
+        
+        simulationHistory.events.push({
+            time: 0,
+            type: 'simulation_start',
+            temperature,
+            density,
+            energyInput
+        });
+        
+        adjustParticleCount();
+        animate();
+    </script>
+</body>
+</html>
