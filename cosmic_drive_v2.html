@@ -61,6 +61,7 @@
             opacity: 0.7;
             transition: opacity 0.2s;
             -webkit-appearance: none;
+            appearance: none;
         }
 
         input[type="range"]:hover {
@@ -351,6 +352,7 @@
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -405,6 +407,7 @@
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -458,6 +461,7 @@
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -800,6 +804,82 @@
         .pulse {
             animation: pulse 2s infinite;
         }
+
+        /* INTRO OVERLAY STYLES */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.97);
+            z-index: 3000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        .intro-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intro-content {
+            max-width: 700px;
+            padding: 40px;
+            border: 3px solid #0FF;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        }
+
+        .intro-title {
+            font-size: 36px;
+            color: #0FF;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+
+        .intro-text {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .intro-question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #FFF;
+        }
+
+        .intro-answers {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .intro-answer {
+            padding: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .intro-answer:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #0FF;
+        }
+
+        .intro-feedback {
+            color: #F06;
+            min-height: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -1040,6 +1120,7 @@
         // Particle system
         class Particle {
             constructor(x, y, type = ELEMENT_TYPES.HYDROGEN) {
+                this.id = particleIdCounter++;
                 this.x = x || Math.random() * width;
                 this.y = y || Math.random() * height;
                 this.vx = (Math.random() - 0.5) * 2;
@@ -1255,18 +1336,65 @@
             }
         }
 
+        // A more robust SpatialHash class
+        class SpatialHash {
+            constructor(cellSize) {
+                this.cellSize = cellSize;
+                this.grid = new Map();
+            }
+
+            getKey(x, y) {
+                const cellX = Math.floor(x / this.cellSize);
+                const cellY = Math.floor(y / this.cellSize);
+                return `${cellX},${cellY}`;
+            }
+
+            clear() {
+                this.grid.clear();
+            }
+
+            insert(particle) {
+                const key = this.getKey(particle.x, particle.y);
+                if (!this.grid.has(key)) {
+                    this.grid.set(key, []);
+                }
+                this.grid.get(key).push(particle);
+            }
+
+            getNearby(particle) {
+                const nearby = new Set();
+                const cellX = Math.floor(particle.x / this.cellSize);
+                const cellY = Math.floor(particle.y / this.cellSize);
+
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        const key = `${cellX + i},${cellY + j}`;
+                        if (this.grid.has(key)) {
+                            for (const p of this.grid.get(key)) {
+                                nearby.add(p);
+                            }
+                        }
+                    }
+                }
+                return nearby;
+            }
+        }
+
         // Game state
         let particles = [];
         let molecules = [];
         let moleculeTypes = new Map(); // Track unique molecule types
         let collisionCount = 0;
         let firstMoleculeFormed = false;
-        let isPaused = false;
+        let isPaused = true;
         let startTime = Date.now();
         let elapsedTime = 0;
         let pauseStartTime = 0;
         let animationId = null;
         let totalXP = 0;
+        let particleIdCounter = 0;
+
+        const spatialHash = new SpatialHash(50); // Cell size of 50px
 
         // Achievement system
         const ACHIEVEMENTS = {
@@ -1284,7 +1412,7 @@
                 icon: '💨',
                 title: 'Hydrogen Factory',
                 description: 'Create 5 H₂ molecules',
-                xp: 75,
+                xp: 100,
                 unlocked: false,
                 check: () => (moleculeTypes.get('H₂ (Hydrogen)') || 0) >= 5,
                 progress: () => Math.min(100, ((moleculeTypes.get('H₂ (Hydrogen)') || 0) / 5) * 100)
@@ -1330,7 +1458,7 @@
                 icon: '🌈',
                 title: 'Molecular Diversity',
                 description: 'Create 5 different molecule types',
-                xp: 200,
+                xp: 250,
                 unlocked: false,
                 check: () => moleculeTypes.size >= 5,
                 progress: () => Math.min(100, (moleculeTypes.size / 5) * 100)
@@ -1350,7 +1478,7 @@
                 icon: '🏭',
                 title: 'Molecular Factory',
                 description: 'Form 20 molecules total',
-                xp: 150,
+                xp: 200,
                 unlocked: false,
                 check: () => molecules.length >= 20,
                 progress: () => Math.min(100, (molecules.length / 20) * 100)
@@ -1701,7 +1829,9 @@
         });
 
         function adjustParticleCount() {
-            while (particles.length < density) {
+            const numToAdd = density - particles.length;
+            if (numToAdd > 0) {
+                for (let i = 0; i < numToAdd; i++) {
                 // Weighted distribution: more H, less heavy elements
                 const rand = Math.random();
                 let type;
@@ -1709,20 +1839,36 @@
                 else if (rand < 0.85) type = ELEMENT_TYPES.CARBON;
                 else if (rand < 0.95) type = ELEMENT_TYPES.OXYGEN;
                 else type = ELEMENT_TYPES.NITROGEN;
-                
                 particles.push(new Particle(null, null, type));
-            }
-            while (particles.length > density) {
-                const p = particles.pop();
-                if (p && p.bonded) {
-                    particles.push(p); // Don't remove bonded particles
-                    break;
                 }
+            } else if (numToAdd < 0) {
+                const numToRemove = -numToAdd;
+                // Remove free particles only
+                particles = particles.filter(p => p.bonded || Math.random() > numToRemove / particles.filter(p => !p.bonded).length);
+                particles.splice(density);
             }
         }
 
         function closeTutorial() {
             document.getElementById('tutorial').style.display = 'none';
+            if (isPaused) {
+                togglePause(); // Start the simulation
+                startTime = Date.now(); // Reset timer to start from 00:00:00
+            }
+        }
+
+        function checkIntroAnswer(answer) {
+            const feedbackEl = document.getElementById('intro-feedback');
+            if (answer === 'emergence') {
+                feedbackEl.textContent = 'Correct. Welcome, Scientist.';
+                feedbackEl.style.color = '#0F6';
+                setTimeout(() => {
+                    document.getElementById('intro-overlay').classList.add('hidden');
+                }, 1500);
+            } else {
+                feedbackEl.textContent = 'Not quite. The goal is observation and guidance, not direct control. Please try again.';
+                feedbackEl.style.color = '#F06';
+            }
         }
 
         function togglePause() {
@@ -1767,12 +1913,18 @@
             
             particles = [];
             molecules = [];
+            particleIdCounter = 0;
             moleculeTypes.clear();
             collisionCount = 0;
-            firstMoleculeFormed = false;
-            isPaused = false;
+            firstMoleculeFormed = false; // This should be reset on simulation reset
+            isPaused = true; // Start paused to show tutorial
             startTime = Date.now();
             elapsedTime = 0;
+            
+            for (const id in ACHIEVEMENTS) {
+                ACHIEVEMENTS[id].unlocked = false;
+                // Note: progress function will reset naturally with game state
+            }
             
             document.getElementById('pause-btn').textContent = '⏸ PAUSE';
             document.getElementById('status-dot').className = 'status-dot';
@@ -1788,10 +1940,20 @@
                     density,
                     energyInput
                 }],
-                snapshots: []
+                snapshots: [],
+                achievements: []
             };
             
             adjustParticleCount();
+            updateAchievementsDisplay();
+            
+            // Show tutorial again on reset
+            document.getElementById('tutorial').style.display = 'block';
+            // Show intro again on reset
+            const intro = document.getElementById('intro-overlay');
+            intro.classList.remove('hidden');
+            document.getElementById('intro-feedback').innerHTML = '&nbsp;';
+
             updateMoleculeList();
         }
 
@@ -2021,14 +2183,6 @@
             desc.innerHTML = `From chaos, order emerges.<br>You have formed ${moleculeName}!`;
             achievement.classList.add('show');
             
-            document.getElementById('level-progress').style.width = '33%';
-            
-            simulationHistory.events.push({
-                time: getElapsedTime(),
-                type: 'first_molecule',
-                molecule: moleculeName
-            });
-            
             setTimeout(() => {
                 achievement.classList.remove('show');
             }, 4000);
@@ -2049,49 +2203,62 @@
         }
 
         function checkCollisions() {
-            for (let i = 0; i < particles.length; i++) {
-                if (particles[i].bonded) continue;
-                
-                for (let j = i + 1; j < particles.length; j++) {
-                    if (particles[j].bonded) continue;
-                    
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
+            // 1. Clear and rebuild the hash grid each frame
+            spatialHash.clear();
+            for (const particle of particles) {
+                if (!particle.bonded) {
+                    spatialHash.insert(particle);
+                }
+            }
+
+            // 2. Iterate through particles and check only against nearby ones
+            for (const p1 of particles) {
+                if (p1.bonded) continue;
+
+                const nearbyParticles = spatialHash.getNearby(p1);
+                for (const p2 of nearbyParticles) {
+                    // Avoid self-collision and duplicate checks (p1.id < p2.id)
+                    if (p1.id >= p2.id || p2.bonded) continue;
+
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    const collisionDist = particles[i].size + particles[j].size + 2;
-                    
+
+                    const collisionDist = p1.size + p2.size + 2;
+
                     if (dist < collisionDist) {
                         collisionCount++;
-                        
+
                         // Collision flash
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                         ctx.beginPath();
-                        ctx.arc(particles[i].x, particles[i].y, 4, 0, Math.PI * 2);
+                        ctx.arc(p1.x, p1.y, 4, 0, Math.PI * 2);
                         ctx.fill();
-                        
+
+                        // Bonding probability is highest around 50K and lower at the edges.
+                        const optimalTemp = 50;
+                        const tempDifference = Math.abs(temperature - optimalTemp);
+                        const tempFactor = Math.max(0, 1 - (tempDifference / 25)); // Max reduction at 25 and 75
+                        const bondingChance = 0.005 * tempFactor;
+
                         // Check for bonding
-                        if (canBond(particles[i], particles[j]) &&
-                            temperature > 30 && temperature < 70 &&
-                            Math.random() < 0.008) {
-                            
+                        if (canBond(p1, p2) &&
+                            temperature > 25 && temperature < 75 &&
+                            Math.random() < bondingChance) {
+
                             // Form molecule!
-                            const molecule = new Molecule([particles[i], particles[j]]);
+                            const molecule = new Molecule([p1, p2]);
                             molecules.push(molecule);
-                            
+
                             // Track molecule types
                             const count = moleculeTypes.get(molecule.name) || 0;
                             moleculeTypes.set(molecule.name, count + 1);
                             updateMoleculeList();
-                            
+
                             if (!firstMoleculeFormed) {
                                 showAchievement(molecule.name);
                             }
-                            
-                            // Update progress bar
-                            const progress = Math.min(100, (molecules.length / 10) * 100);
-                            document.getElementById('level-progress').style.width = progress + '%';
-                            
+
                             simulationHistory.events.push({
                                 time: getElapsedTime(),
                                 type: 'molecule_formed',
@@ -2103,48 +2270,74 @@
                             const angle = Math.atan2(dy, dx);
                             const sin = Math.sin(angle);
                             const cos = Math.cos(angle);
-                            
-                            const vx1 = particles[i].vx * cos + particles[i].vy * sin;
-                            const vy1 = particles[i].vy * cos - particles[i].vx * sin;
-                            const vx2 = particles[j].vx * cos + particles[j].vy * sin;
-                            const vy2 = particles[j].vy * cos - particles[j].vx * sin;
-                            
+
+                            const vx1 = p1.vx * cos + p1.vy * sin;
+                            const vy1 = p1.vy * cos - p1.vx * sin;
+                            const vx2 = p2.vx * cos + p2.vy * sin;
+                            const vy2 = p2.vy * cos - p2.vx * sin;
+
                             // Mass-based collision
-                            const m1 = particles[i].mass;
-                            const m2 = particles[j].mass;
+                            const m1 = p1.mass;
+                            const m2 = p2.mass;
                             const vx1_final = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2);
                             const vx2_final = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2);
-                            
-                            particles[i].vx = vx1_final * cos - vy1 * sin;
-                            particles[i].vy = vy1 * cos + vx1_final * sin;
-                            particles[j].vx = vx2_final * cos - vy2 * sin;
-                            particles[j].vy = vy2 * cos + vx2_final * sin;
-                            
+
+                            p1.vx = vx1_final * cos - vy1 * sin;
+                            p1.vy = vy1 * cos + vx1_final * sin;
+                            p2.vx = vx2_final * cos - vy2 * sin;
+                            p2.vy = vy2 * cos + vx2_final * sin;
+
                             // Separate particles
                             const overlap = collisionDist - dist;
                             const separateX = (dx / dist) * overlap * 0.5;
                             const separateY = (dy / dist) * overlap * 0.5;
-                            particles[i].x += separateX;
-                            particles[i].y += separateY;
-                            particles[j].x -= separateX;
-                            particles[j].y -= separateY;
+                            p1.x += separateX;
+                            p1.y += separateY;
+                            p2.x -= separateX;
+                            p2.y -= separateY;
                         }
                     }
                 }
             }
         }
 
+        // Cache DOM elements for stats
+        const statElements = {
+            particleCount: document.getElementById('particle-count'),
+            moleculeCount: document.getElementById('molecule-count'),
+            uniqueMolecules: document.getElementById('unique-molecules'),
+            collisionCount: document.getElementById('collision-count'),
+            avgEnergy: document.getElementById('avg-energy')
+        };
+
         function updateStats() {
-            document.getElementById('particle-count').textContent = particles.length;
-            document.getElementById('molecule-count').textContent = molecules.length;
-            document.getElementById('unique-molecules').textContent = moleculeTypes.size;
-            document.getElementById('collision-count').textContent = collisionCount;
+            statElements.particleCount.textContent = particles.length;
+            statElements.moleculeCount.textContent = molecules.length;
+            statElements.uniqueMolecules.textContent = moleculeTypes.size;
+            statElements.collisionCount.textContent = collisionCount;
             
             const freeParticles = particles.filter(p => !p.bonded);
             const avgEnergy = freeParticles.length > 0 
                 ? freeParticles.reduce((sum, p) => sum + p.energy, 0) / freeParticles.length
                 : 0;
-            document.getElementById('avg-energy').textContent = avgEnergy.toFixed(1);
+            statElements.avgEnergy.textContent = avgEnergy.toFixed(1);
+        }
+
+        function updateLevelProgress() {
+            let progress = 0;
+            const collisionMilestone = 1000;
+            const moleculeMilestone = 10;
+
+            if (molecules.length > 0) {
+                // Progress from 50% to 100% based on molecule count
+                progress = 50 + Math.min(50, (molecules.length / moleculeMilestone) * 50);
+            } else if (collisionCount > 0) {
+                // Progress from 0% to 50% based on collisions, but cap at 50%
+                // to ensure molecule formation provides the next jump.
+                progress = Math.min(50, (collisionCount / collisionMilestone) * 50);
+            }
+
+            document.getElementById('level-progress').style.width = progress + '%';
         }
 
         // Animation loop
@@ -2194,6 +2387,9 @@
             // Update stats
             updateStats();
             
+            // Update Level Progress
+            updateLevelProgress();
+
             // Check achievements every frame
             checkAchievements();
         }
@@ -2534,6 +2730,10 @@
 
         // Initialize achievements display
         updateAchievementsDisplay();
+        
+        // Set initial pause state for tutorial
+        document.getElementById('status-dot').className = 'status-dot paused';
+        document.getElementById('status-text').textContent = 'PAUSED';
         
         simulationHistory.events.push({
             time: 0,

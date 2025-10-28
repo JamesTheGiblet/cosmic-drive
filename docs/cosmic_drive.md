@@ -11,22 +11,22 @@ This document contains everything needed to build Forge Cosmos from first princi
 ## 📖 Table of Contents
 
 - [🎯 Core Philosophy](#-core-philosophy)
-- [🎮 Complete Game Overview](#-complete-game-overview)
-- [🎨 Visual Design System](#-visual-design-system)
-- [🏆 Complete Progression System](#-complete-progression-system)
-- [⚛️ AtomicForge - The Foundation](#️-atomicforge---the-foundation)
-- [🧬 LifeForge - Cellular Evolution](#-lifeforge---cellular-evolution)
-- [🌍 EcoForge - Ecosystem Dynamics](#-ecoforge---ecosystem-dynamics)
-- [🧠 NeuroForge - Intelligence Emergence](#-neuroforge---intelligence-emergence)
-- [🗣️ LinguaForge 2.0 - Language Evolution](#️-linguaforge-20---language-evolution)
-- [🏛️ CultForge - Civilization Building](#️-cultforge---civilization-building)
-- [🌌 Cosmogenesis - Cosmic Scale](#-cosmogenesis---cosmic-scale)
-- [💻 Technical Architecture](#-technical-architecture)
-- [🔧 Implementation Guides](#-implementation-guides)
-- [🚀 Development Roadmap](#-development-roadmap)
-- [📊 Testing & Validation](#-testing--validation)
-- [🎯 Design Decisions & Rationale](#-design-decisions--rationale)
-- [📚 Research & References](#-research--references)
+- [🎮 Complete Game Overview](#complete-game-overview)
+- [🎨 Visual Design System](#visual-design-system)
+- [🏆 Complete Progression System](#complete-progression-system)
+- [⚛️ AtomicForge - The Foundation](#atomicforge---the-foundation)
+- [🧬 LifeForge - Cellular Evolution](#lifeforge---cellular-evolution)
+- [🌍 EcoForge - Ecosystem Dynamics](#ecoforge---ecosystem-dynamics)
+- [🧠 NeuroForge - Intelligence Emergence](#neuroforge---intelligence-emergence)
+- [🗣️ LinguaForge 2.0 - Language Evolution](#linguaforge-20---language-evolution)
+- [🏛️ CultForge - Civilization Building](#cultforge---civilization-building)
+- [🌌 Cosmogenesis - Cosmic Scale](#cosmogenesis---cosmic-scale)
+- [💻 Technical Architecture](#technical-architecture)
+- [🔧 Implementation Guides](#implementation-guides)
+- [🚀 Development Roadmap](#development-roadmap)
+- [📊 Testing & Validation](#testing--validation)
+- [🎯 Design Decisions & Rationale](#design-decisions--rationale)
+- [📚 Research & References](#research--references)
 
 ---
 
@@ -42,7 +42,7 @@ Every system in this game demonstrates emergence - the phenomenon where intricat
 
 ### The Three Pillars
 
-```
+```txt
 1. SIMPLE RULES
    └─ Every system starts with 3-5 elegant mechanics
    └─ No complex initial conditions
@@ -61,7 +61,7 @@ Every system in this game demonstrates emergence - the phenomenon where intricat
 
 ### Core Principles
 
-```
+```txt
 OUT OF SIMPLICITY → COMPLEXITY IS BORN
   └─ Start with atoms, end with civilizations
 
@@ -110,7 +110,7 @@ FREE & ACCESSIBLE
 
 ### The Player Experience Arc
 
-```
+```txt
 HOUR 1: "This is neat"
 └─ Tutorial: Watch particles become atoms
 └─ First achievement: Create H₂O molecule
@@ -143,7 +143,7 @@ HOUR 100+: "This is my creative canvas"
 
 ### Core Gameplay Loop
 
-```
+```txt
 ┌─────────────────────────────────────────┐
 │                                         │
 │  1. OBSERVE                             │
@@ -178,9 +178,9 @@ HOUR 100+: "This is my creative canvas"
 
 ### Interaction Paradigms
 
-**Primary Interface: Sliders & Observation**
+#### Primary Interface: Sliders & Observation
 
-```
+```txt
 Player adjusts environmental pressures:
 ├─ Temperature, resource abundance, mutation rate
 ├─ Communication pressure, social complexity
@@ -188,9 +188,9 @@ Player adjusts environmental pressures:
 └─ System responds emergently
 ```
 
-**Secondary Interface: Targeted Interventions**
+#### Secondary Interface: Targeted Interventions
 
-```
+```txt
 Occasional direct actions:
 ├─ Introduce new concept (fire, wheel, mathematics)
 ├─ Trigger contact event (two groups meet)
@@ -198,9 +198,9 @@ Occasional direct actions:
 └─ Save/load system states (experiment freely)
 ```
 
-**Tertiary Interface: Visualization Tools**
+#### Tertiary Interface: Visualization Tools
 
-```
+```txt
 Deep dives into system state:
 ├─ Zoom: Atom → Cell → Organism → Civilization → Galaxy
 ├─ Time controls: Pause, slow-mo, fast-forward
@@ -219,7 +219,7 @@ Deep dives into system state:
 
 ### Level-Based Visual Evolution
 
-```
+```txt
 ┌─────────────────────────────────────────────────────────────┐
 │ LEVEL 0-3: PRIMORDIAL CHAOS (AtomicForge)                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -348,7 +348,7 @@ COLOR_SEMANTICS = {
 
 **Every Forge shares the unified aesthetic but with unique signatures:**
 
-```
+```txt
 ⚛️ ATOMICFORGE
 └─ Visual: Particle clouds → Geometric atoms → Molecular networks
    └─ Neon: Collision sparks → Atomic glows → Bond connections
@@ -432,7 +432,7 @@ NEON_GLOW_SYSTEM = {
 
 ### Pixel Art Guidelines
 
-```
+```txt
 PIXEL ART PRINCIPLES:
 
 1. READABLE SILHOUETTES
@@ -468,7 +468,7 @@ PIXEL ART PRINCIPLES:
 
 ### The Master Progression Table
 
-```
+```txt
 ┌──────────────────────────────────────────────────────────────┐
 │                     PROGRESSION TIERS                        │
 ├────────┬─────────────┬──────────────────┬───────────────────┤
@@ -484,7 +484,7 @@ PIXEL ART PRINCIPLES:
 
 #### Tier 0: Primordial Forger (Levels 0-3)
 
-```
+```txt
 LEVEL 0: PARTICLE SCULPTOR
 ├─ Tutorial: "In the Beginning"
 ├─ Goal: Understand Brownian motion
@@ -522,7 +522,7 @@ LEVEL 3: LIFE SEEDER
 
 #### Tier 1: Novice Creator (Levels 4-13)
 
-```
+```txt
 LEVEL 4: CELLULAR ARCHITECT
 ├─ Goal: Sustain your first living cell
 ├─ Task: Balance energy input/output for stable life
@@ -606,7 +606,7 @@ LEVEL 13: EMERGENCE APPRENTICE
 
 #### Tier 2: World Shaper (Levels 14-28)
 
-```
+```txt
 LEVEL 14: EVOLUTIONARY GUIDE
 ├─ Goal: Speciate organisms for niches
 ├─ Task: 5 species from common ancestor
@@ -730,7 +730,7 @@ LEVEL 28: COGNITIVE DESIGNER
 
 #### Tier 3: Cosmic Architect (Levels 29-53)
 
-```
+```txt
 LEVEL 29: SOCIAL ENGINEER
 ├─ Goal: Political systems emerge
 ├─ Task: Democracy, monarchy, or other form
@@ -910,7 +910,7 @@ LEVEL 50: REALITY FORGER
 
 #### Tier 4: Universal Visionary (Levels 51-100)
 
-```
+```txt
 LEVEL 51-60: TRANSCENDENT SYSTEMS
 ├─ Multi-dimensional civilizations
 ├─ Time manipulation abilities
@@ -949,7 +949,7 @@ LEVEL 100: INFINITE EMERGENCE
 
 ### XP System Deep Dive
 
-```javascript
+```txtjavascript
 XP_SOURCES = {
   // Discovery & Creation
   DISCOVERY: 100,           // New emergent pattern found
@@ -1011,11 +1011,11 @@ function calculateXPForLevel(level) {
     return 13000 + ((level - 51) * 700);
   }
 }
-```
+```txt
 
 ### Skill Trees (Complete)
 
-```
+```txt
 🧬 BIOLOGICAL MASTERY (25 Skills)
 ├─ Tier 1: Foundations (Levels 4-13)
 │  ├─ 1. Genetic Stability (reduce harmful mutations)
@@ -1157,7 +1157,7 @@ function calculateXPForLevel(level) {
 
 *Note: This section contains all 100+ achievements organized by category*
 
-```
+```txt
 ⚛️ ATOMIC ACHIEVEMENTS (10 total)
 ├─ ⚡ First Spark (observe first collision) - 50 XP
 ├─ ⚛️ First Atom (form H) - 75 XP
@@ -1231,7 +1231,7 @@ function calculateXPForLevel(level) {
 ├─ ✍️ Writing Invention (first script) - 400 XP ★
 ├─ 📜 Alphabet Creation (phonetic writing) - 300 XP
 ├─ 📖 Literary Masterpiece (epic poem/novel) - 550 XP
-├─ 📚 Library (knowledge preserved) - 450 XP
+├─ 📚 Library (knowledge preserved) - 450 XP 
 ├─ 🎭 Poetic Singularity (beautiful language) - 600 XP
 ├─ 🔮 Metacognitive Leap (linguistic theory) - 450 XP
 ├─ ♾️ Universal Grammar (discover principles) - 700 XP
@@ -1318,7 +1318,7 @@ function calculateXPForLevel(level) {
 
 ### The Three Phases
 
-```
+```txt
 PHASE 0: PARTICLE SOUP (Level 0-1)
 └─ Pure chaos → First atoms
 
@@ -1365,7 +1365,7 @@ PARTICLE_RULES = {
 
 #### What Emerges
 
-```
+```txt
 Starting State:
 ├─ ~100-500 particles
 ├─ Random positions
@@ -1387,7 +1387,7 @@ After 60 seconds:
 
 **Tutorial Flow:**
 
-```
+```txt
 1. SCREEN: Black void
    └─ "In the beginning, there was chaos..."
 
@@ -1416,7 +1416,7 @@ After 60 seconds:
 
 #### Visual Design
 
-```
+```txt
 LEVEL 0 AESTHETIC:
 ├─ Background: Pure black (#000000)
 ├─ Particles: 1-2 pixel white dots
@@ -1438,7 +1438,7 @@ LEVEL 1 AESTHETIC:
 
 #### Player Controls
 
-```
+```txt
 SLIDER CONTROLS:
 ┌─────────────────────────────────────┐
 │ Temperature                         │
@@ -1501,7 +1501,7 @@ ATOMIC_RULES = {
 
 #### What Emerges
 
-```
+```txt
 Level 1: Hydrogen Dominance
 ├─ H is most common (simplest to form)
 ├─ Occasional He (helium) appears
@@ -1569,7 +1569,7 @@ ELEMENT_PROFILES = {
 
 **Level 2 Tutorial:**
 
-```
+```txt
 1. Hydrogen atoms bouncing around
    └─ "Atoms seek stability..."
 
@@ -1594,7 +1594,7 @@ ELEMENT_PROFILES = {
 
 #### Visual Design
 
-```
+```txt
 LEVEL 2 AESTHETIC:
 ├─ Element colors fully present
 ├─ Atoms: 2x2 or 4x4 pixel geometric shapes
@@ -1645,7 +1645,7 @@ MOLECULAR_RULES = {
 
 #### What Emerges
 
-```
+```txt
 Simple Molecules (Early Level 3):
 ├─ H₂O (water) - most common
 ├─ CO₂ (carbon dioxide)
@@ -1703,7 +1703,7 @@ ABIOGENESIS_CONDITIONS = {
 
 **This needs to be PERFECT. It's the emotional climax of Act 1.**
 
-```
+```txt
 T=0: Random Chemistry
 ├─ Organic molecules bouncing
 ├─ Occasional chains forming
@@ -1752,7 +1752,7 @@ T=10000: ABIOGENESIS
 
 **Emotional Arc:**
 
-```
+```txt
 Start: Curiosity ("What am I looking at?")
    ↓
 Middle: Engagement ("I'm controlling chemistry!")
@@ -1766,7 +1766,7 @@ Transition: Wonder ("Now I guide its evolution")
 
 **Pacing:**
 
-```
+```txt
 Minutes 0-5: Learn controls, play with particles
 Minutes 5-10: Understand atoms, form first molecules
 Minutes 10-20: Chemistry complexity, organic molecules
@@ -1777,7 +1777,7 @@ Minute 35+: Transition to LifeForge
 
 #### Visual Design for Abiogenesis
 
-```
+```txt
 PRE-ABIOGENESIS:
 ├─ Screen: Full of molecular activity
 ├─ Colors: Blues, reds, whites (H, O, C)
@@ -2319,4 +2319,4 @@ class AtomicForgeRenderer {
 - **NeuroForge** (Levels 8-30)
 - **LinguaForge 2.0** (Levels 7-50)
 - **CultForge** (Levels 10-45)
-- **Cosmogenesis** (Levels 12-100)
+- **Cosmogenesis** (Levels 54-100)
