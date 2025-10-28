@@ -277,11 +277,11 @@
 
       getBiomeColor(biome) {
         switch(biome) {
-          case 'water': return 'rgba(52,152,219,0.25)';
-          case 'desert': return 'rgba(243,156,18,0.25)';
-          case 'forest': return 'rgba(39,174,96,0.25)';
-          case 'mountain': return 'rgba(127,140,141,0.25)';
-          case 'grassland': return 'rgba(46,204,113,0.25)';
+          case 'water': return 'rgba(52,152,219,0.4)';
+          case 'desert': return 'rgba(243,156,18,0.3)';
+          case 'forest': return 'rgba(39,174,96,0.4)';
+          case 'mountain': return 'rgba(127,140,141,0.35)';
+          case 'grassland': return 'rgba(46,204,113,0.3)';
           default: return 'rgba(52,73,94,0.25)';
         }
       }
@@ -418,6 +418,9 @@
         
         // Biome effects on metabolism
         const biome = env.terrain.getBiomeAt(this.position.x, this.position.y);
+        // Biome effects on speed
+        this.speed = this.baseSpeed * (biome === 'forest' ? 0.75 : 1.0);
+
         let biomePressure = 1.0;
         
         switch (biome) {
@@ -426,6 +429,7 @@
           case 'water': 
             biomePressure = this.genome.traits.aquatic > 0.5 ? 0.75 : 1.8;
             break;
+          case 'mountain': biomePressure = 1.2; break;
         }
         
         this.energy -= this.metabolicRate * dt * env.energyPressure * biomePressure;
@@ -433,9 +437,6 @@
         if (this.energy <= 0) {
           return this.die();
         }
-
-        // Reset speed
-        this.speed = this.baseSpeed;
 
         // Behavior based on trophic level
         if (this.trophicLevel === 'carnivore') {
@@ -877,10 +878,10 @@
         
         let energy;
         switch (biome) {
-          case 'forest': energy = 12 + rand(0, 18); break;
-          case 'grassland': energy = 10 + rand(0, 12); break;
-          case 'desert': energy = 4 + rand(0, 8); break;
-          case 'water': energy = 8 + rand(0, 14); break;
+          case 'forest': energy = 15 + rand(0, 20); break; // Forests are rich
+          case 'grassland': energy = 12 + rand(0, 15); break;
+          case 'desert': energy = 3 + rand(0, 6); break; // Deserts are scarce
+          case 'water': energy = 10 + rand(0, 16); break; // Aquatic life
           default: energy = 8;
         }
         
@@ -1066,10 +1067,10 @@
         const biome = simulation.terrain.getBiomeAt(x, y);
         let energy;
         switch (biome) {
-          case 'forest': energy = 12 + rand(0, 18); break;
-          case 'grassland': energy = 10 + rand(0, 12); break;
-          case 'desert': energy = 4 + rand(0, 8); break;
-          default: energy = 8;
+          case 'forest': energy = 15 + rand(0, 20); break;
+          case 'grassland': energy = 12 + rand(0, 15); break;
+          case 'desert': energy = 3 + rand(0, 6); break;
+          default: energy = 10;
         }
         simulation.resources.push(new Resource(x, y, energy));
       }
