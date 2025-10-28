@@ -1,0 +1,1294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LifeForge v2.0 — Evolution Simulator</title>
+  <style>
+    :root{
+      --bg:#07101a; --surface:#0f1720; --accent:#00f5ff; --accent2:#ff00d6; --success:#2ecc71;
+      --warning:#f39c12; --danger:#e74c3c; --muted:#8aa0b3; --glass: rgba(255,255,255,0.03);
+      --font: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    }
+    html,body{height:100%;margin:0;font-family:var(--font);background:linear-gradient(180deg,#04101a 0%, #071426 100%);color:#e6f7ff; -webkit-user-select:none; user-select:none;}
+    .app{display:flex;flex-direction:column;height:100vh;max-height:100dvh;}
+    header{padding:12px 14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    header h1{font-size:1.1rem;margin:0;letter-spacing:0.6px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    header .meta{font-size:0.8rem;color:var(--muted)}
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+    .world-wrap{flex:1;position:relative;display:flex;align-items:stretch;}
+    canvas#lifeCanvas{flex:1;width:100%;height:100%;display:block;background:radial-gradient(circle at 20% 10%, rgba(0,20,30,0.6), transparent 8%), linear-gradient(120deg, rgba(0,0,0,0.3), rgba(5,10,20,0.3));cursor:grab}
+    .hud{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:8px;z-index:20}
+    .panel{-webkit-backdrop-filter: blur(8px);backdrop-filter: blur(8px);background:rgba(7,16,26,0.85);border:1px solid rgba(255,255,255,0.08);padding:10px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.7)}
+    .controls{display:flex;flex-direction:column;gap:10px;}
+    .control{display:flex;flex-direction:column;gap:6px;font-size:0.78rem}
+    .slider{appearance:none;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2));outline:none;cursor:pointer;}
+    .slider::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
+    .bottom-bar{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,transparent,rgba(0,0,0,0.25));flex-wrap:wrap;}
+    .btn{background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);padding:10px 14px;border-radius:12px;flex:1;min-width:100px;text-align:center;font-size:0.9rem;cursor:pointer;transition:all 0.2s;color:inherit;font-family:inherit;}
+    .btn:hover{background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));border-color:rgba(255,255,255,0.15);transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{border-color:rgba(0,245,255,0.4);box-shadow:0 6px 18px rgba(0,245,255,0.08)}
+    .btn.danger{border-color:rgba(231,76,60,0.4);box-shadow:0 6px 18px rgba(231,76,60,0.08)}
+    .stats{display:flex;gap:8px;align-items:center;font-size:0.78rem;flex-wrap:wrap;}
+    .stat-pill{background:linear-gradient(180deg, rgba(255,255,255,0.04), transparent);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);white-space:nowrap;}
+    .stat-pill.herbivore{border-color:rgba(46,204,113,0.3);color:#2ecc71}
+    .stat-pill.carnivore{border-color:rgba(231,76,60,0.3);color:#e74c3c}
+    .stat-pill.decomposer{border-color:rgba(165,105,79,0.3);color:#a5694f}
+    .sheet{position:fixed;left:8px;right:8px;bottom:10px;max-height:70vh;background:linear-gradient(180deg, rgba(12,20,28,0.98), rgba(6,10,16,0.98));border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.06);display:none;overflow:auto;z-index:50}
+    .sheet.open{display:block;animation:slideUp 0.3s ease-out}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .sheet h3{margin:0 0 12px 0;color:var(--accent)}
+    .sheet h4{margin:16px 0 8px 0;color:var(--muted);font-size:0.9rem}
+    .close-btn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.1);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;line-height:1}
+    .close-btn:hover{background:rgba(255,255,255,0.2)}
+    @media (min-width:700px){ header h1{font-size:1.2rem} .bottom-bar{max-width:1000px;margin:0 auto;width:100%}} 
+    @media (max-height:600px){ .sheet{max-height:50vh}}
+    button{touch-action:manipulation}
+    .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .legend .dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,0.2)}
+    .muted{color:var(--muted);font-size:0.85rem;line-height:1.5}
+    .achievement{position:fixed;top:80px;right:20px;background:linear-gradient(135deg,rgba(0,245,255,0.15),rgba(255,0,214,0.15));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.2);padding:16px 20px;border-radius:16px;box-shadow:0 12px 40px rgba(0,245,255,0.3);z-index:100;animation:achieveSlide 0.5s ease-out;min-width:280px}
+    @keyframes achieveSlide{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+    .achievement h4{margin:0 0 6px 0;color:var(--accent);font-size:1rem}
+    .achievement p{margin:0;font-size:0.85rem;color:var(--muted)}
+    .achievement .xp{color:var(--accent2);font-weight:bold;margin-top:8px;font-size:0.9rem}
+    ul{padding-left:20px;margin:8px 0}
+    ul li{margin:6px 0}
+    .biome-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+    .biome-item{display:flex;align-items:center;gap:6px;font-size:0.8rem}
+    .biome-color{width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.2)}
+    #graphCanvas{width:100%;height:120px;background:rgba(0,0,0,0.3);border-radius:8px;margin-top:8px}
+    .mini-graph{position:absolute;right:10px;top:10px;width:280px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);background:rgba(7,16,26,0.85);border:1px solid rgba(255,255,255,0.08);padding:12px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.7);z-index:20}
+    @media (max-width:700px){.mini-graph{width:200px;right:10px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>🧬 LifeForge v2.0 — Evolution Simulator</h1>
+        <div class="meta">Predator-Prey • Biomes • Full Evolution</div>
+      </div>
+      <div class="stats">
+        <div class="stat-pill herbivore">🌿 Herbivores: <span id="statHerb">0</span></div>
+        <div class="stat-pill carnivore">🦁 Carnivores: <span id="statCarn">0</span></div>
+        <div class="stat-pill decomposer">🍄 Decomposers: <span id="statDecomp">0</span></div>
+        <div class="stat-pill">Gen: <span id="statGen">0</span></div>
+      </div>
+    </header>
+
+    <div class="main">
+      <div class="world-wrap">
+        <canvas id="lifeCanvas"></canvas>
+
+        <div class="hud">
+          <div class="panel controls" style="min-width:180px">
+            <div style="font-size:0.85rem;color:white;margin-bottom:8px">⚙️ Simulation Controls</div>
+            
+            <div class="control">
+              <label for="mutationSlider" style="color:var(--muted)">Mutation Rate: <span id="mutationValue">0.02</span></label>
+              <input id="mutationSlider" class="slider" type="range" min="0" max="0.15" step="0.001" value="0.02" title="Mutation Rate">
+              <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted)"><span>Stable</span><span>Chaotic</span></div>
+            </div>
+
+            <div class="control">
+              <label for="resourceSlider" style="color:var(--muted)">Resource Density: <span id="resourceValue">0.50</span></label>
+              <input id="resourceSlider" class="slider" type="range" min="0" max="1" step="0.01" value="0.5" title="Resource Density">
+              <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted)"><span>Scarce</span><span>Abundant</span></div>
+            </div>
+
+            <div class="control">
+              <label for="energySlider" style="color:var(--muted)">Energy Pressure: <span id="energyValue">1.0</span></label>
+              <input id="energySlider" class="slider" type="range" min="0.5" max="2" step="0.1" value="1" title="Energy Pressure">
+              <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted)"><span>Easy</span><span>Harsh</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-graph">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px">Population History</div>
+          <canvas id="graphCanvas" width="280" height="100"></canvas>
+          <div class="legend" style="margin-top:8px;font-size:0.7rem">
+            <div style="display:flex;align-items:center;gap:4px"><div class="dot" style="background:#2ecc71"></div><span>Herbivores</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div class="dot" style="background:#e74c3c"></div><span>Carnivores</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div class="dot" style="background:#a5694f"></div><span>Decomposers</span></div>
+          </div>
+        </div>
+
+        <div style="position:absolute;right:10px;bottom:10px;z-index:25;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <div class="panel" style="padding:8px 10px;">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px">⏱️ Time Control</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn" id="btnPause">⏸</button>
+              <button class="btn" id="btn1x">1x</button>
+              <button class="btn" id="btn10x">10x</button>
+              <button class="btn" id="btn100x">100x</button>
+            </div>
+          </div>
+
+          <div class="panel" style="padding:8px 10px;">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px">🌍 Biomes</div>
+            <div class="biome-legend">
+              <div class="biome-item"><div class="biome-color" style="background:#27ae60"></div><span>Forest</span></div>
+              <div class="biome-item"><div class="biome-color" style="background:#2ecc71"></div><span>Grass</span></div>
+              <div class="biome-item"><div class="biome-color" style="background:#f39c12"></div><span>Desert</span></div>
+              <div class="biome-item"><div class="biome-color" style="background:#3498db"></div><span>Water</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:absolute;left:10px;bottom:10px;z-index:25;display:flex;gap:8px">
+          <button class="btn primary" id="infoToggle">📖 Info</button>
+          <button class="btn" id="achieveToggle">🏆 Achievements</button>
+        </div>
+
+        <div class="sheet" id="infoSheet">
+          <button class="close-btn" onclick="document.getElementById('infoSheet').classList.remove('open')">×</button>
+          <h3>🧬 About LifeForge v2.0</h3>
+          <p class="muted">A complete evolution simulator featuring predator-prey dynamics, nutrient cycling, biome-based adaptation, and emergent ecosystem complexity.</p>
+
+          <h4>Controls</h4>
+          <ul class="muted">
+            <li><strong>Click/Tap</strong> world to spawn resources</li>
+            <li><strong>Sliders</strong> control mutation rate, resource density, and selection pressure</li>
+            <li><strong>Time Controls</strong> speed up evolution (1x → 100x)</li>
+            <li><strong>Bottom Buttons</strong> spawn organisms and manipulate world</li>
+          </ul>
+
+          <h4>What's New in v2.0</h4>
+          <ul class="muted">
+            <li>🦁 <strong>Predator-Prey</strong>: Food chains with herbivores and carnivores</li>
+            <li>🍄 <strong>Decomposers</strong>: Dead cells release nutrients, closing the cycle</li>
+            <li>🌍 <strong>Biomes</strong>: Forest, grassland, desert, and water zones</li>
+            <li>📊 <strong>Population Graph</strong>: Watch Lotka-Volterra oscillations in real-time</li>
+            <li>🏆 <strong>Achievements</strong>: Unlock milestones as your ecosystem evolves</li>
+            <li>🎨 <strong>Color-Coded Traits</strong>: Cell color indicates speed/role</li>
+          </ul>
+
+          <h4>Gameplay Tips</h4>
+          <ul class="muted">
+            <li>Start with <strong>low mutation</strong> and <strong>moderate resources</strong> for stable evolution</li>
+            <li>High mutation creates rapid exploration but many failed organisms</li>
+            <li>Carnivores need herbivores to survive—balance is key!</li>
+            <li>Decomposers prevent nutrient depletion but compete with herbivores</li>
+            <li>Different biomes favor different strategies (speed in desert, size in forest)</li>
+            <li>Watch the graph for predator-prey cycles—they'll oscillate naturally</li>
+          </ul>
+
+          <h4>Evolution Science</h4>
+          <p class="muted">This simulation demonstrates real evolutionary principles: natural selection, genetic drift, adaptation, speciation, ecological niches, trophic levels, and nutrient cycling. Each organism has a genome determining speed, metabolism, size, and diet. Mutations create variation, and selection pressure shapes populations over generations.</p>
+        </div>
+
+        <div class="sheet" id="achieveSheet">
+          <button class="close-btn" onclick="document.getElementById('achieveSheet').classList.remove('open')">×</button>
+          <h3>🏆 Achievements</h3>
+          <div id="achievementList" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+
+      </div>
+
+      <div class="bottom-bar">
+        <button class="btn" id="spawnHerbivore">🌿 Spawn Herbivore</button>
+        <button class="btn" id="spawnCarnivore">🦁 Spawn Carnivore</button>
+        <button class="btn" id="spawnResources">🍎 Add Resources</button>
+        <button class="btn danger" id="btnReset">🔄 Reset World</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================
+    // UTILITY FUNCTIONS
+    // ========================================
+    function rand(min=0,max=1){return Math.random()*(max-min)+min}
+    function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+    function distance(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
+
+    // ========================================
+    // PERLIN NOISE (Simplified)
+    // ========================================
+    class SimplexNoise {
+      constructor(seed = Math.random()) {
+        this.seed = seed;
+        this.perm = [];
+        for (let i = 0; i < 256; i++) this.perm[i] = i;
+        for (let i = 255; i > 0; i--) {
+          const j = Math.floor((this.seed * 9301 + i * 49297) % 233280 / 233280 * (i + 1));
+          [this.perm[i], this.perm[j]] = [this.perm[j], this.perm[i]];
+        }
+        this.perm = [...this.perm, ...this.perm];
+      }
+      
+      noise(x, y) {
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+        x -= Math.floor(x);
+        y -= Math.floor(y);
+        const u = x * x * (3 - 2 * x);
+        const v = y * y * (3 - 2 * y);
+        const a = this.perm[X] + Y;
+        const b = this.perm[X + 1] + Y;
+        return (1 + ((1 - u) * ((1 - v) * this.grad(this.perm[a], x, y) +
+                    v * this.grad(this.perm[a + 1], x, y - 1)) +
+                u * ((1 - v) * this.grad(this.perm[b], x - 1, y) +
+                    v * this.grad(this.perm[b + 1], x - 1, y - 1)))) / 2;
+      }
+      
+      grad(hash, x, y) {
+        const h = hash & 3;
+        const u = h < 2 ? x : y;
+        const v = h < 2 ? y : x;
+        return ((h & 1) ? -u : u) + ((h & 2) ? -2 * v : 2 * v);
+      }
+    }
+
+    // ========================================
+    // TERRAIN SYSTEM
+    // ========================================
+    class Terrain {
+      constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.cellSize = 40;
+        this.cells = [];
+        this.noise = new SimplexNoise(Math.random());
+        this.generate();
+      }
+
+      generate() {
+        for (let y = 0; y < this.height; y += this.cellSize) {
+          for (let x = 0; x < this.width; x += this.cellSize) {
+            const elevation = this.noise.noise(x * 0.008, y * 0.008);
+            const moisture = this.noise.noise(x * 0.012 + 1000, y * 0.012 + 1000);
+            const biome = this.getBiome(elevation, moisture);
+            this.cells.push({x, y, elevation, moisture, biome});
+          }
+        }
+      }
+
+      getBiome(elevation, moisture) {
+        if (elevation < 0.35) return 'water';
+        if (moisture < 0.35) return 'desert';
+        if (moisture > 0.65 && elevation < 0.65) return 'forest';
+        if (elevation > 0.75) return 'mountain';
+        return 'grassland';
+      }
+
+      getBiomeColor(biome) {
+        switch(biome) {
+          case 'water': return 'rgba(52,152,219,0.25)';
+          case 'desert': return 'rgba(243,156,18,0.25)';
+          case 'forest': return 'rgba(39,174,96,0.25)';
+          case 'mountain': return 'rgba(127,140,141,0.25)';
+          case 'grassland': return 'rgba(46,204,113,0.25)';
+          default: return 'rgba(52,73,94,0.25)';
+        }
+      }
+
+      getBiomeAt(x, y) {
+        const cellX = Math.floor(x / this.cellSize) * this.cellSize;
+        const cellY = Math.floor(y / this.cellSize) * this.cellSize;
+        const cell = this.cells.find(c => c.x === cellX && c.y === cellY);
+        return cell ? cell.biome : 'grassland';
+      }
+
+    }
+
+    // ========================================
+    // GENOME SYSTEM
+    // ========================================
+    class Genome {
+      constructor(seed) {
+        this.traits = {
+          speed: seed?.speed ?? rand(0.3, 0.7),
+          turning_rate: seed?.turning_rate ?? rand(0.3, 0.7),
+          metabolic_rate: seed?.metabolic_rate ?? rand(0.3, 0.7),
+          energy_storage: seed?.energy_storage ?? rand(0.3, 0.7),
+          size: seed?.size ?? rand(0.3, 0.7),
+          reproduction_threshold: seed?.reproduction_threshold ?? rand(0.5, 0.8),
+          predator: seed?.predator ?? rand(0, 0.3),
+          decomposer: seed?.decomposer ?? rand(0, 0.2),
+          aquatic: seed?.aquatic ?? rand(0, 0.3),
+          chemical_sensitivity: seed?.chemical_sensitivity ?? rand(0.2, 0.6),
+          vision_range: seed?.vision_range ?? rand(0.2, 0.5)
+        };
+      }
+
+      copy() {
+        const g = new Genome();
+        g.traits = JSON.parse(JSON.stringify(this.traits));
+        return g;
+      }
+
+      gaussianRandom(mean = 0, std = 0.1) {
+        const u1 = Math.random(), u2 = Math.random();
+        const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        return mean + std * z0;
+      }
+
+      mutate(mutationRate) {
+        for (const k in this.traits) {
+          if (Math.random() < mutationRate) {
+            const change = this.gaussianRandom(0, 0.1);
+            this.traits[k] = clamp(this.traits[k] + change, 0, 1);
+          }
+        }
+      }
+
+      getPhenotype() {
+        return {
+          speed: 20 + this.traits.speed * 100,
+          turning: this.traits.turning_rate * Math.PI * 0.8,
+          metabolism: 0.8 + this.traits.metabolic_rate * 2,
+          maxEnergy: 40 + this.traits.energy_storage * 160,
+          radius: 4 + this.traits.size * 12,
+          vision: 150 + this.traits.vision_range * 200 // Vision range from 150 to 350
+        };
+      }
+
+      getTrophicLevel() {
+        if (this.traits.predator > 0.55) return 'carnivore';
+        if (this.traits.decomposer > 0.55) return 'decomposer';
+        return 'herbivore';
+      }
+
+      getColor(trophicLevel) {
+        switch (trophicLevel) {
+          case 'herbivore': 
+            const hue = 120 + (this.traits.speed * 60); // Green to yellow (speed)
+            return `hsl(${hue}, 70%, 50%)`;
+          case 'carnivore': 
+            return `hsl(0, ${50 + this.traits.speed * 40}%, 50%)`; // Red variants
+          case 'decomposer': 
+            return `hsl(30, 50%, 40%)`; // Brown
+          default: 
+            return '#00f5ff';
+        }
+      }
+    }
+
+    // ========================================
+    // RESOURCE SYSTEM
+    // ========================================
+    class Resource {
+      constructor(x, y, energy = 20) {
+        this.position = {x, y};
+        this.energyValue = energy;
+        this.radius = 3 + energy * 0.2;
+        this.consumed = false;
+        this.fromCorpse = false;
+      }
+    }
+
+    // ========================================
+    // CELL/ORGANISM SYSTEM
+    // ========================================
+    class Cell {
+      constructor(genome, position, energy) {
+        this.genome = genome || new Genome();
+        this.position = position || {x: worldW/2, y: worldH/2};
+        this.trophicLevel = this.genome.getTrophicLevel();
+        this.generation = 0;
+        this.age = 0;
+        this.alive = true;
+        this.totalOffspring = 0;
+        this.initFromGenome();
+        this.energy = energy ?? this.maxEnergy * 0.6;
+      }
+
+      initFromGenome() {
+        const p = this.genome.getPhenotype();
+        this.speed = p.speed;
+        this.baseSpeed = p.speed;
+        this.turning = p.turning;
+        this.metabolicRate = p.metabolism;
+        this.maxEnergy = p.maxEnergy;
+        this.radius = p.radius;
+        this.vision = p.vision;
+        this.color = this.genome.getColor(this.trophicLevel);
+        this.direction = rand(0, Math.PI * 2);
+        this.velocity = {x: 0, y: 0};
+      }
+
+      update(dt, resources, cells, env) {
+        if (!this.alive) return null;
+        
+        this.age += dt;
+        
+        // Biome effects on metabolism
+        const biome = env.terrain.getBiomeAt(this.position.x, this.position.y);
+        let biomePressure = 1.0;
+        
+        switch (biome) {
+          case 'desert': biomePressure = 1.4; break;
+          case 'forest': biomePressure = 0.85; break;
+          case 'water': 
+            biomePressure = this.genome.traits.aquatic > 0.5 ? 0.75 : 1.8;
+            break;
+        }
+        
+        this.energy -= this.metabolicRate * dt * env.energyPressure * biomePressure;
+        
+        if (this.energy <= 0) {
+          return this.die();
+        }
+
+        // Reset speed
+        this.speed = this.baseSpeed;
+
+        // Behavior based on trophic level
+        if (this.trophicLevel === 'carnivore') {
+          this.hunt(cells, dt);
+        } else if (this.trophicLevel === 'decomposer') {
+          this.seekCorpses(resources, dt);
+        } else {
+          this.forage(resources, dt);
+        }
+
+        // Movement
+        this.direction += rand(-this.turning, this.turning) * dt;
+        this.velocity.x = Math.cos(this.direction) * this.speed;
+        this.velocity.y = Math.sin(this.direction) * this.speed;
+        this.position.x += this.velocity.x * dt;
+        this.position.y += this.velocity.y * dt;
+
+        // Wrap boundaries
+        if (this.position.x < 0) this.position.x += worldW;
+        if (this.position.x > worldW) this.position.x -= worldW;
+        if (this.position.y < 0) this.position.y += worldH;
+        if (this.position.y > worldH) this.position.y -= worldH;
+
+        // Consume resources
+        if (this.trophicLevel !== 'carnivore') {
+          for (const r of resources) {
+            if (r.consumed) continue;
+            const d = distance(this.position, r.position);
+            if (d < this.radius + r.radius) {
+              this.energy += r.energyValue;
+              this.energy = Math.min(this.energy, this.maxEnergy);
+              r.consumed = true;
+              effects.resourceConsumed(r.position, this.color);
+              break;
+            }
+          }
+        }
+
+        // Reproduction
+        if (this.energy >= this.maxEnergy * this.genome.traits.reproduction_threshold) {
+          return this.reproduce(env.mutationRate);
+        }
+
+        return null;
+      }
+
+      forage(resources, dt) {
+        if (this.genome.traits.chemical_sensitivity < 0.3) return;
+        
+        let nearest = null;
+        let minDist = Infinity;
+        
+        for (const r of resources) {
+          if (r.consumed) continue;
+          if (r.fromCorpse && this.trophicLevel === 'herbivore') continue;
+          
+          const d = distance(this.position, r.position);
+          if (d < minDist && d < this.vision) {
+            minDist = d;
+            nearest = r;
+          }
+        }
+        
+        if (nearest) {
+          const dx = nearest.position.x - this.position.x;
+          const dy = nearest.position.y - this.position.y;
+          const targetAngle = Math.atan2(dy, dx);
+          this.turnToward(targetAngle, dt);
+          this.speed *= 1.1;
+        }
+      }
+
+      seekCorpses(resources, dt) {
+        let nearest = null;
+        let minDist = Infinity;
+        
+        for (const r of resources) {
+          if (r.consumed || !r.fromCorpse) continue;
+          const d = distance(this.position, r.position);
+          if (d < minDist && d < this.vision * 1.1) { // Decomposers have slightly better "smell"
+            minDist = d;
+            nearest = r;
+          }
+        }
+        
+        if (nearest) {
+          const dx = nearest.position.x - this.position.x;
+          const dy = nearest.position.y - this.position.y;
+          const targetAngle = Math.atan2(dy, dx);
+          this.turnToward(targetAngle, dt);
+          this.speed *= 1.15;
+        }
+      }
+
+      hunt(cells, dt) {
+        let nearest = null;
+        let minDist = Infinity;
+        
+        for (const prey of cells) {
+          if (!prey.alive || prey === this) continue;
+          if (prey.trophicLevel === 'carnivore') continue;
+          if (prey.radius > this.radius * 0.75) continue;
+          
+          const d = distance(this.position, prey.position);
+          if (d < minDist && d < this.vision * 1.2) { // Carnivores have better vision
+            minDist = d;
+            nearest = prey;
+          }
+        }
+        
+        if (nearest) {
+          const dx = nearest.position.x - this.position.x;
+          const dy = nearest.position.y - this.position.y;
+          const targetAngle = Math.atan2(dy, dx);
+          this.turnToward(targetAngle, dt);
+          this.speed *= 1.25;
+          
+          // Kill if close
+          if (minDist < this.radius + nearest.radius) {
+            this.energy += nearest.energy * 0.7;
+            this.energy = Math.min(this.energy, this.maxEnergy);
+            nearest.alive = false;
+            effects.predation(nearest.position, this.color, nearest.color);
+          }
+        }
+      }
+
+      turnToward(targetAngle, dt) {
+        let diff = targetAngle - this.direction;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const turn = Math.sign(diff) * Math.min(Math.abs(diff), this.turning * dt * 2);
+        this.direction += turn;
+      }
+
+      reproduce(mutationRate) {
+        const childEnergy = this.maxEnergy * 0.4;
+        this.energy -= childEnergy;
+        
+        const childGenome = this.genome.copy();
+        childGenome.mutate(mutationRate);
+        
+        const offsetAngle = rand(0, Math.PI * 2);
+        const dist = this.radius * 2 + rand(2, 8);
+        const childPos = {
+          x: this.position.x + Math.cos(offsetAngle) * dist,
+          y: this.position.y + Math.sin(offsetAngle) * dist
+        };
+        
+        const child = new Cell(childGenome, childPos, childEnergy);
+        child.generation = this.generation + 1;
+        this.totalOffspring++;
+        
+        effects.cellDivision(this.position, this.color);
+        return child;
+      }
+
+      die() {
+        this.alive = false;
+        const nutrients = [];
+        const nutrientCount = Math.max(1, Math.floor(this.radius / 4));
+        
+        for (let i = 0; i < nutrientCount; i++) {
+          const angle = (i / nutrientCount) * Math.PI * 2;
+          const dist = rand(0, this.radius * 1.2);
+          const nutrient = new Resource(
+            this.position.x + Math.cos(angle) * dist,
+            this.position.y + Math.sin(angle) * dist,
+            Math.max(8, this.energy / nutrientCount)
+          );
+          nutrient.fromCorpse = true;
+          nutrients.push(nutrient);
+        }
+        
+        effects.cellDeath(this.position, this.color);
+        return nutrients;
+      }
+    }
+
+    // ========================================
+    // VISUAL EFFECTS
+    // ========================================
+    const effects = {
+      pulses: [],
+      resourceConsumed(pos, color) {
+        this.pulses.push({type: 'eat', pos: {...pos}, color, t: 0});
+      },
+      cellDivision(pos, color) {
+        this.pulses.push({type: 'div', pos: {...pos}, color, t: 0});
+      },
+      cellDeath(pos, color) {
+        this.pulses.push({type: 'die', pos: {...pos}, color, t: 0});
+      },
+      predation(pos, predColor, preyColor) {
+        this.pulses.push({type: 'pred', pos: {...pos}, predColor, preyColor, t: 0});
+      },
+      update(dt) {
+        for (const p of this.pulses) p.t += dt;
+        this.pulses = this.pulses.filter(p => p.t < 1.0);
+      }
+    };
+
+    // ========================================
+    // POPULATION TRACKER
+    // ========================================
+    class PopulationTracker {
+      constructor() {
+        this.history = {
+          herbivores: [],
+          carnivores: [],
+          decomposers: []
+        };
+        this.maxHistory = 400;
+      }
+
+      update(cells) {
+        const counts = {herbivores: 0, carnivores: 0, decomposers: 0};
+        
+        for (const c of cells) {
+          if (!c.alive) continue;
+          counts[c.trophicLevel + 's']++;
+        }
+        
+        this.history.herbivores.push(counts.herbivores);
+        this.history.carnivores.push(counts.carnivores);
+        this.history.decomposers.push(counts.decomposers);
+        
+        for (const key in this.history) {
+          if (this.history[key].length > this.maxHistory) {
+            this.history[key].shift();
+          }
+        }
+      }
+
+      render(canvas) {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        
+        ctx.clearRect(0, 0, w, h);
+        
+        const maxPop = Math.max(
+          ...this.history.herbivores,
+          ...this.history.carnivores,
+          ...this.history.decomposers,
+          10
+        );
+        
+        const drawLine = (data, color) => {
+          if (data.length < 2) return;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let i = 0; i < data.length; i++) {
+            const x = (i / (this.maxHistory - 1)) * w;
+            const y = h - (data[i] / maxPop) * h;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        };
+        
+        drawLine(this.history.herbivores, '#2ecc71');
+        drawLine(this.history.carnivores, '#e74c3c');
+        drawLine(this.history.decomposers, '#a5694f');
+      }
+    }
+
+    // ========================================
+    // ACHIEVEMENT SYSTEM
+    // ========================================
+    class AchievementSystem {
+      constructor() {
+        this.achievements = [
+          {id: 'first_cell', name: 'Genesis', desc: 'Create your first organism', unlocked: false, xp: 50},
+          {id: 'population_10', name: 'Growing Colony', desc: 'Reach 10 organisms', unlocked: false, xp: 100},
+          {id: 'population_50', name: 'Thriving Ecosystem', desc: 'Reach 50 organisms', unlocked: false, xp: 200},
+          {id: 'generation_10', name: 'Evolution Begins', desc: 'Reach generation 10', unlocked: false, xp: 150},
+          {id: 'generation_50', name: 'Ancient Lineage', desc: 'Reach generation 50', unlocked: false, xp: 300},
+          {id: 'predator_emerges', name: 'Apex Predator', desc: 'First carnivore evolves', unlocked: false, xp: 250},
+          {id: 'decomposer_emerges', name: 'Circle of Life', desc: 'First decomposer evolves', unlocked: false, xp: 200},
+          {id: 'food_web', name: 'Food Web', desc: 'All three trophic levels coexist', unlocked: false, xp: 400},
+          {id: 'stable_ecosystem', name: 'Equilibrium', desc: '100+ generations of stability', unlocked: false, xp: 500},
+          {id: 'mass_extinction', name: 'The Great Dying', desc: 'Population crashes below 5', unlocked: false, xp: 100}
+        ];
+        this.queue = [];
+      }
+
+      check(cells) {
+        const alive = cells.filter(c => c.alive);
+        const herbivores = alive.filter(c => c.trophicLevel === 'herbivore').length;
+        const carnivores = alive.filter(c => c.trophicLevel === 'carnivore').length;
+        const decomposers = alive.filter(c => c.trophicLevel === 'decomposer').length;
+        const maxGen = alive.length > 0 ? Math.max(...alive.map(c => c.generation)) : 0;
+
+        if (alive.length >= 1) this.unlock('first_cell');
+        if (alive.length >= 10) this.unlock('population_10');
+        if (alive.length >= 50) this.unlock('population_50');
+        if (maxGen >= 10) this.unlock('generation_10');
+        if (maxGen >= 50) this.unlock('generation_50');
+        if (carnivores > 0) this.unlock('predator_emerges');
+        if (decomposers > 0) this.unlock('decomposer_emerges');
+        if (herbivores > 0 && carnivores > 0 && decomposers > 0) this.unlock('food_web');
+        if (maxGen >= 100) this.unlock('stable_ecosystem');
+        if (alive.length < 5 && alive.length > 0) this.unlock('mass_extinction');
+      }
+
+      unlock(id) {
+        const achievement = this.achievements.find(a => a.id === id);
+        if (achievement && !achievement.unlocked) {
+          achievement.unlocked = true;
+          this.queue.push(achievement);
+          this.showNotification(achievement);
+        }
+      }
+
+      showNotification(achievement) {
+        const div = document.createElement('div');
+        div.className = 'achievement';
+        div.innerHTML = `
+          <h4>🏆 Achievement Unlocked!</h4>
+          <p>${achievement.name}</p>
+          <p class="muted">${achievement.desc}</p>
+          <div class="xp">+${achievement.xp} XP</div>
+        `;
+        document.body.appendChild(div);
+        
+        setTimeout(() => {
+          div.style.transition = 'all 0.5s ease-out';
+          div.style.opacity = '0';
+          div.style.transform = 'translateX(100px)';
+          setTimeout(() => div.remove(), 500);
+        }, 4000);
+      }
+
+      renderList() {
+        const list = document.getElementById('achievementList');
+        list.innerHTML = '';
+        
+        for (const a of this.achievements) {
+          const div = document.createElement('div');
+          div.style.cssText = `
+            padding: 12px;
+            background: ${a.unlocked ? 'rgba(0,245,255,0.1)' : 'rgba(255,255,255,0.02)'};
+            border: 1px solid ${a.unlocked ? 'rgba(0,245,255,0.3)' : 'rgba(255,255,255,0.05)'};
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          `;
+          div.innerHTML = `
+            <div style="font-size: 2rem;">${a.unlocked ? '🏆' : '🔒'}</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: ${a.unlocked ? 'var(--accent)' : 'var(--muted)'};">${a.name}</div>
+              <div style="font-size: 0.85rem; color: var(--muted);">${a.desc}</div>
+              ${a.unlocked ? `<div style="font-size: 0.8rem; color: var(--accent2); margin-top: 4px;">+${a.xp} XP</div>` : ''}
+            </div>
+          `;
+          list.appendChild(div);
+        }
+      }
+    }
+
+    // ========================================
+    // MAIN SIMULATION
+    // ========================================
+    let canvas = document.getElementById('lifeCanvas');
+    let ctx = canvas.getContext('2d');
+    let canvasW = 0, canvasH = 0, worldW = 1200, worldH = 800;
+
+    const camera = {
+      x: worldW / 2,
+      y: worldH / 2,
+      zoom: 1
+    };
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvasW = Math.max(320, Math.floor(canvas.clientWidth));
+      canvasH = Math.max(240, Math.floor(canvas.clientHeight));
+      canvas.width = canvasW * dpr;
+      canvas.height = canvasH * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      // Recenter camera on resize
+      camera.x = worldW / 2;
+      camera.y = worldH / 2;
+      camera.zoom = Math.min(canvasW / worldW, canvasH / worldH) * 0.9;
+      render();
+    });
+
+    const simulation = {
+      cells: [],
+      resources: [],
+      terrain: null,
+      tracker: new PopulationTracker(),
+      achievements: new AchievementSystem(),
+      timeScale: 1,
+      running: true,
+      mutationRate: 0.02,
+      energyPressure: 1,
+      resourceDensity: 0.5,
+      camera: camera
+    };
+
+    function worldInit() {
+      worldW = Math.max(1000, canvasW * 1.5);
+      worldH = Math.max(700, canvasH * 1.3);
+      simulation.terrain = new Terrain(worldW, worldH);
+    }
+
+    function spawnCell(trophicLevel = 'herbivore') {
+      const genome = new Genome();
+      
+      // Set trophic level
+      if (trophicLevel === 'carnivore') {
+        genome.traits.predator = 0.7 + rand(0, 0.25);
+      } else if (trophicLevel === 'decomposer') {
+        genome.traits.decomposer = 0.7 + rand(0, 0.25);
+      } else {
+        genome.traits.predator = rand(0, 0.3);
+        genome.traits.decomposer = rand(0, 0.2);
+      }
+      
+      const cell = new Cell(genome, {x: rand(100, worldW - 100), y: rand(100, worldH - 100)});
+      simulation.cells.push(cell);
+    }
+
+    function spawnResources(count = 40) {
+      for (let i = 0; i < count; i++) {
+        const x = rand(0, worldW);
+        const y = rand(0, worldH);
+        const biome = simulation.terrain.getBiomeAt(x, y);
+        
+        let energy;
+        switch (biome) {
+          case 'forest': energy = 12 + rand(0, 18); break;
+          case 'grassland': energy = 10 + rand(0, 12); break;
+          case 'desert': energy = 4 + rand(0, 8); break;
+          case 'water': energy = 8 + rand(0, 14); break;
+          default: energy = 8;
+        }
+        
+        simulation.resources.push(new Resource(x, y, energy));
+      }
+    }
+
+    function drawEffects() {
+      for (const p of effects.pulses) {
+        const alpha = 1 - (p.t / 1.0);
+        ctx.save();
+        
+        if (p.type === 'eat') {
+          ctx.strokeStyle = p.color;
+          ctx.globalAlpha = alpha;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(
+            (p.pos.x / worldW) * canvasW,
+            (p.pos.y / worldH) * canvasH,
+            14 * (1 - alpha) + 6,
+            0, Math.PI * 2
+          );
+          ctx.stroke();
+        }
+        
+        if (p.type === 'div') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.beginPath();
+          ctx.arc(
+            (p.pos.x / worldW) * canvasW,
+            (p.pos.y / worldH) * canvasH,
+            10 * (1 - alpha) + 5,
+            0, Math.PI * 2
+          );
+          ctx.fill();
+        }
+        
+        if (p.type === 'die') {
+          ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+          ctx.globalAlpha = alpha;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(
+            (p.pos.x / worldW) * canvasW,
+            (p.pos.y / worldH) * canvasH,
+            18 * (1 - alpha) + 8,
+            0, Math.PI * 2
+          );
+          ctx.stroke();
+        }
+        
+        if (p.type === 'pred') {
+          ctx.strokeStyle = '#ff0000';
+          ctx.globalAlpha = alpha * 0.9;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(
+            (p.pos.x / worldW) * canvasW,
+            (p.pos.y / worldH) * canvasH,
+            22 * (1 - alpha) + 10,
+            0, Math.PI * 2
+          );
+          ctx.stroke();
+        }
+        
+        ctx.restore();
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      
+      ctx.save();
+      // Apply camera transform
+      ctx.translate(canvasW / 2, canvasH / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+
+      // Terrain
+      if (simulation.terrain) {
+        for (const cell of simulation.terrain.cells) {
+          ctx.fillStyle = simulation.terrain.getBiomeColor(cell.biome);
+          ctx.fillRect(cell.x, cell.y, simulation.terrain.cellSize, simulation.terrain.cellSize);
+        }
+      }
+
+      // Grid
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      const step = 50;
+      for (let x = 0; x < canvasW; x += step) {
+        // ctx.beginPath();
+        // ctx.moveTo(x, 0);
+        // ctx.lineTo(x, canvasH);
+        // ctx.stroke();
+      }
+      for (let y = 0; y < canvasH; y += step) {
+        // ctx.beginPath();
+        // ctx.moveTo(0, y);
+        // ctx.lineTo(canvasW, y);
+        // ctx.stroke();
+      }
+      ctx.restore();
+      
+      // Resources
+      for (const r of simulation.resources) {
+        if (r.consumed) continue;
+        ctx.save();
+        ctx.fillStyle = r.fromCorpse ? '#8b6f47' : '#2ecc71';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.arc(r.position.x, r.position.y, r.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // Cells
+      for (const c of simulation.cells) {
+        if (!c.alive) continue;
+        
+        ctx.save();
+        
+        // Glow
+        const energyRatio = c.energy / c.maxEnergy;
+        if (energyRatio > 0.3) {
+          ctx.shadowBlur = 8 + 16 * energyRatio;
+          ctx.shadowColor = c.color;
+        }
+        
+        // Body
+        ctx.fillStyle = c.color;
+        ctx.beginPath();
+        ctx.arc(c.position.x, c.position.y, c.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eye/direction indicator
+        if (c.radius > 5) {
+          ctx.fillStyle = 'rgba(255,255,255,0.15)';
+          ctx.beginPath();
+          ctx.arc(
+            c.position.x + Math.cos(c.direction) * c.radius * 0.3,
+            c.position.y + Math.sin(c.direction) * c.radius * 0.3,
+            c.radius * 0.35,
+            0, Math.PI * 2
+          );
+          ctx.fill();
+        }
+        
+        ctx.restore();
+        
+        // Energy bar
+        ctx.save();
+        const barWidth = c.radius * 2;
+        const barHeight = 4 / camera.zoom;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(c.position.x - c.radius, c.position.y - c.radius - (7 / camera.zoom), barWidth, barHeight);
+        ctx.fillStyle = energyRatio > 0.5 ? 'rgba(46,204,113,0.9)' : 'rgba(243,156,18,0.9)';
+        ctx.fillRect(c.position.x - c.radius, c.position.y - c.radius - (7 / camera.zoom), (c.energy / c.maxEnergy) * barWidth, barHeight);
+        ctx.restore();
+      }
+      
+      // Effects (TODO: Make effects respect camera transform)
+      drawEffects();
+    }
+
+    let lastTime = performance.now();
+
+    function step(now) {
+      const dtReal = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      const dt = simulation.running ? dtReal * simulation.timeScale : 0;
+      
+      effects.update(dtReal);
+      
+      // Spawn random resources
+      if (Math.random() < simulation.resourceDensity * 0.3 * dtReal) {
+        const x = rand(0, worldW);
+        const y = rand(0, worldH);
+        const biome = simulation.terrain.getBiomeAt(x, y);
+        let energy;
+        switch (biome) {
+          case 'forest': energy = 12 + rand(0, 18); break;
+          case 'grassland': energy = 10 + rand(0, 12); break;
+          case 'desert': energy = 4 + rand(0, 8); break;
+          default: energy = 8;
+        }
+        simulation.resources.push(new Resource(x, y, energy));
+      }
+      
+      // Update cells
+      const newCells = [];
+      for (const c of simulation.cells) {
+        if (!c.alive) continue;
+        
+        const child = c.update(dt, simulation.resources, simulation.cells, {
+          mutationRate: simulation.mutationRate,
+          energyPressure: simulation.energyPressure,
+          terrain: simulation.terrain
+        });
+        
+        if (child) newCells.push(child);
+        
+        if (!c.alive) {
+          const nutrients = c.die();
+          if (nutrients) simulation.resources.push(...nutrients);
+        }
+      }
+      
+      simulation.cells.push(...newCells);
+      
+      // Remove consumed resources
+      simulation.resources = simulation.resources.filter(r => !r.consumed);
+      
+      // Update tracker and achievements
+      if (Math.random() < 0.1) {
+        simulation.tracker.update(simulation.cells);
+        simulation.achievements.check(simulation.cells);
+      }
+      
+      updateStats();
+      render();
+      
+      const graphCanvas = document.getElementById('graphCanvas');
+      if (graphCanvas) simulation.tracker.render(graphCanvas);
+      
+      requestAnimationFrame(step);
+    }
+
+    function updateStats() {
+      const alive = simulation.cells.filter(c => c.alive);
+      const herbivores = alive.filter(c => c.trophicLevel === 'herbivore').length;
+      const carnivores = alive.filter(c => c.trophicLevel === 'carnivore').length;
+      const decomposers = alive.filter(c => c.trophicLevel === 'decomposer').length;
+      const maxGen = alive.length > 0 ? Math.max(...alive.map(c => c.generation)) : 0;
+      
+      document.getElementById('statHerb').textContent = herbivores;
+      document.getElementById('statCarn').textContent = carnivores;
+      document.getElementById('statDecomp').textContent = decomposers;
+      document.getElementById('statGen').textContent = maxGen;
+    }
+
+    function reset() {
+      simulation.cells = [];
+      simulation.resources = [];
+      simulation.tracker = new PopulationTracker();
+      worldInit();
+      
+      // Seed with diverse organisms
+      camera.zoom = Math.min(canvasW / worldW, canvasH / worldH) * 0.9;
+      for (let i = 0; i < 8; i++) spawnCell('herbivore');
+      for (let i = 0; i < 2; i++) spawnCell('carnivore');
+      for (let i = 0; i < 1; i++) spawnCell('decomposer');
+      
+      spawnResources(Math.round(80 * simulation.resourceDensity));
+      updateStats();
+    }
+
+    // Event Listeners
+    document.getElementById('spawnHerbivore').addEventListener('click', () => {
+      spawnCell('herbivore');
+      updateStats();
+    });
+
+    document.getElementById('spawnCarnivore').addEventListener('click', () => {
+      spawnCell('carnivore');
+      updateStats();
+    });
+
+    document.getElementById('spawnResources').addEventListener('click', () => {
+      spawnResources(Math.round(50 * simulation.resourceDensity));
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (confirm('Reset the world? This will clear all organisms.')) {
+        reset();
+      }
+    });
+
+    document.getElementById('mutationSlider').addEventListener('input', (e) => {
+      simulation.mutationRate = parseFloat(e.target.value);
+      document.getElementById('mutationValue').textContent = simulation.mutationRate.toFixed(3);
+    });
+
+    document.getElementById('resourceSlider').addEventListener('input', (e) => {
+      simulation.resourceDensity = parseFloat(e.target.value);
+      document.getElementById('resourceValue').textContent = simulation.resourceDensity.toFixed(2);
+    });
+
+    document.getElementById('energySlider').addEventListener('input', (e) => {
+      simulation.energyPressure = parseFloat(e.target.value);
+      document.getElementById('energyValue').textContent = simulation.energyPressure.toFixed(1);
+    });
+
+    // Initialize slider display values
+    document.getElementById('mutationSlider').dispatchEvent(new Event('input'));
+
+    document.getElementById('btnPause').addEventListener('click', () => {
+      simulation.running = !simulation.running;
+      document.getElementById('btnPause').textContent = simulation.running ? '⏸' : '▶';
+    });
+
+    document.getElementById('btn1x').addEventListener('click', () => {
+      simulation.timeScale = 1;
+    });
+
+    document.getElementById('btn10x').addEventListener('click', () => {
+      simulation.timeScale = 10;
+    });
+
+    document.getElementById('btn100x').addEventListener('click', () => {
+      simulation.timeScale = 100;
+    });
+
+    document.getElementById('infoToggle').addEventListener('click', () => {
+      document.getElementById('infoSheet').classList.toggle('open');
+      document.getElementById('achieveSheet').classList.remove('open');
+    });
+
+    document.getElementById('achieveToggle').addEventListener('click', () => {
+      document.getElementById('achieveSheet').classList.toggle('open');
+      document.getElementById('infoSheet').classList.remove('open');
+      simulation.achievements.renderList();
+    });
+
+    // Camera Controls
+    let isPanning = false;
+    let lastPanPos = { x: 0, y: 0 };
+
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function screenToWorld(pos) {
+      return {
+        x: (pos.x - canvasW / 2) / camera.zoom + camera.x,
+        y: (pos.y - canvasH / 2) / camera.zoom + camera.y
+      };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      isPanning = true;
+      lastPanPos = getMousePos(e);
+      canvas.style.cursor = 'grabbing';
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (isPanning) {
+        const currentPos = getMousePos(e);
+        const dx = currentPos.x - lastPanPos.x;
+        const dy = currentPos.y - lastPanPos.y;
+        
+        camera.x -= dx / camera.zoom;
+        camera.y -= dy / camera.zoom;
+        
+        lastPanPos = currentPos;
+      }
+    });
+
+    const stopPanning = () => {
+      isPanning = false;
+      canvas.style.cursor = 'grab';
+    };
+
+    canvas.addEventListener('mouseup', stopPanning);
+    canvas.addEventListener('mouseleave', stopPanning);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const mousePos = getMousePos(e);
+      const worldPosBefore = screenToWorld(mousePos);
+
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      camera.zoom = clamp(camera.zoom * zoomFactor, 0.1, 5);
+
+      const worldPosAfter = screenToWorld(mousePos);
+      camera.x += worldPosBefore.x - worldPosAfter.x;
+      camera.y += worldPosBefore.y - worldPosAfter.y;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (Math.abs(getMousePos(e).x - lastPanPos.x) < 2 && Math.abs(getMousePos(e).y - lastPanPos.y) < 2) {
+        const worldPos = screenToWorld(getMousePos(e));
+        simulation.resources.push(new Resource(worldPos.x, worldPos.y, 12));
+      }
+    });
+
+    // Initialize
+    resizeCanvas();
+    worldInit();
+    reset();
+    lastTime = performance.now();
+    requestAnimationFrame(step);
+
+    // Expose API
+    window.LifeForge = {simulation, spawnCell, spawnResources, reset};
+    
+    // Prevent scroll on touch
+    document.body.addEventListener('touchmove', function(e) {
+      if (e.target === canvas) e.preventDefault();
+    }, {passive: false});
+  </script>
+</body>
+</html>
