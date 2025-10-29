@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATOMICFORGE - Level 0: Particle Soup</title>
     <style>
+        :root {
+            --primary-color: #0FF;
+            --secondary-color: #F06;
+            --success-color: #0F6;
+            --warning-color: #FF0;
+            --text-color: #FFF;
+            --bg-color: #000;
+            --panel-bg: rgba(0, 20, 40, 0.9);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,9 +22,9 @@
         }
 
         body {
-            background: #000;
+            background: var(--bg-color);
             font-family: 'Courier New', monospace;
-            color: #0FF;
+            color: var(--primary-color);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -24,14 +34,14 @@
         #canvas {
             flex: 1;
             display: block;
-            background: #000;
+            background: var(--bg-color);
         }
 
         .controls {
-            background: rgba(0, 20, 40, 0.9);
+            background: var(--panel-bg);
             padding: 20px;
-            border-top: 2px solid #0FF;
-            box-shadow: 0 -5px 30px rgba(0, 255, 255, 0.3);
+            border-top: 2px solid var(--primary-color);
+            box-shadow: 0 -5px 30px rgba(0, 255, 255, 0.3); /* Kept as specific color for the glow effect */
             max-height: 40vh;
             overflow-y: auto;
         }
@@ -56,7 +66,7 @@
         input[type="range"] {
             flex: 1;
             height: 4px;
-            background: #0FF;
+            background: var(--primary-color);
             outline: none;
             opacity: 0.7;
             transition: opacity 0.2s;
@@ -73,7 +83,7 @@
             appearance: none;
             width: 20px;
             height: 20px;
-            background: #0FF;
+            background: var(--primary-color);
             cursor: pointer;
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
@@ -82,7 +92,7 @@
         input[type="range"]::-moz-range-thumb {
             width: 20px;
             height: 20px;
-            background: #0FF;
+            background: var(--primary-color);
             cursor: pointer;
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
@@ -93,7 +103,7 @@
             min-width: 60px;
             text-align: right;
             font-weight: bold;
-            color: #FFF;
+            color: var(--text-color);
         }
 
         .stats {
@@ -121,7 +131,7 @@
         .stat-value {
             font-size: 20px;
             font-weight: bold;
-            color: #FFF;
+            color: var(--text-color);
         }
 
         .achievement {
@@ -129,8 +139,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: rgba(0, 0, 0, 0.95);
-            border: 3px solid #0FF;
+            background: rgba(0, 0, 0, 0.95); /* Kept specific for popups */
+            border: 3px solid var(--primary-color);
             padding: 40px;
             text-align: center;
             box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
@@ -147,13 +157,13 @@
         .achievement-title {
             font-size: 32px;
             margin-bottom: 10px;
-            color: #0FF;
+            color: var(--primary-color);
             text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
         }
 
         .achievement-subtitle {
             font-size: 18px;
-            color: #FFF;
+            color: var(--text-color);
             margin-bottom: 20px;
         }
 
@@ -167,8 +177,8 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #0FF;
+            background: rgba(0, 0, 0, 0.9); /* Kept specific for popups */
+            border: 2px solid var(--primary-color);
             padding: 20px 30px;
             text-align: center;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
@@ -190,8 +200,8 @@
 
         button {
             background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #0FF;
-            color: #0FF;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
             padding: 10px 20px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
@@ -213,19 +223,19 @@
         }
 
         button.danger {
-            border-color: #F06;
-            color: #F06;
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
             background: rgba(255, 0, 102, 0.2);
         }
 
         button.danger:hover {
             background: rgba(255, 0, 102, 0.4);
-            box-shadow: 0 0 20px rgba(255, 0, 102, 0.6);
+            box-shadow: 0 0 20px var(--secondary-color);
         }
 
         button.success {
-            border-color: #0F6;
-            color: #0F6;
+            border-color: var(--success-color);
+            color: var(--success-color);
             background: rgba(0, 255, 102, 0.2);
         }
 
@@ -266,28 +276,71 @@
             font-weight: bold;
         }
 
+                .level-up-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95); /* Kept specific for popups */
+            border: 3px solid var(--primary-color);
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            min-width: 350px;
+        }
+
+        .level-up-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .level-up-title {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .level-up-subtitle {
+            font-size: 18px;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .level-up-unlocks {
+            font-size: 14px;
+            opacity: 0.9;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
         .status-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #0F6;
+            background: var(--success-color);
             box-shadow: 0 0 10px rgba(0, 255, 102, 0.8);
         }
 
         .status-dot.paused {
-            background: #FF0;
+            background: var(--warning-color);
             box-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
         }
 
         .status-dot.stopped {
-            background: #F06;
+            background: var(--secondary-color);
             box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
         }
 
         .timer {
             font-size: 20px;
             font-weight: bold;
-            color: #FFF;
+            color: var(--text-color);
             font-variant-numeric: tabular-nums;
         }
 
@@ -296,7 +349,7 @@
             top: 20px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0FF;
+            border: 2px solid var(--primary-color);
             padding: 10px 20px;
             border-radius: 5px;
             text-align: center;
@@ -318,7 +371,7 @@
 
         .level-progress-bar {
             height: 100%;
-            background: #0FF;
+            background: var(--primary-color);
             width: 0%;
             transition: width 0.5s;
         }
@@ -328,7 +381,7 @@
             bottom: 20px;
             left: 20px;
             background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0FF;
+            border: 2px solid var(--primary-color);
             padding: 10px;
             border-radius: 5px;
             z-index: 50;
@@ -379,7 +432,7 @@
             bottom: 20px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0FF;
+            border: 2px solid var(--primary-color);
             padding: 10px;
             border-radius: 5px;
             z-index: 50;
@@ -433,7 +486,7 @@
             top: 80px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0FF;
+            border: 2px solid var(--primary-color);
             padding: 10px;
             border-radius: 5px;
             z-index: 50;
@@ -479,7 +532,7 @@
 
         .achievement-item.unlocked {
             background: rgba(0, 255, 255, 0.15);
-            border-color: #0FF;
+            border-color: var(--primary-color);
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         }
 
@@ -513,7 +566,7 @@
         }
 
         .achievement-status.unlocked {
-            background: #0F6;
+            background: var(--success-color);
             color: #000;
         }
 
@@ -544,7 +597,7 @@
 
         .progress-fill {
             height: 100%;
-            background: #0FF;
+            background: var(--primary-color);
             transition: width 0.3s ease;
         }
 
@@ -553,8 +606,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: rgba(0, 0, 0, 0.95);
-            border: 3px solid #0FF;
+            background: rgba(0, 0, 0, 0.95); /* Kept specific for popups */
+            border: 3px solid var(--primary-color);
             padding: 30px 40px;
             text-align: center;
             box-shadow: 0 0 50px rgba(0, 255, 255, 0.8);
@@ -578,13 +631,13 @@
         .achievement-popup-title {
             font-size: 28px;
             margin-bottom: 10px;
-            color: #0FF;
+            color: var(--primary-color);
             text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
         }
 
         .achievement-popup-subtitle {
             font-size: 16px;
-            color: #FFF;
+            color: var(--text-color);
             margin-bottom: 15px;
         }
 
@@ -597,7 +650,7 @@
         .achievement-popup-xp {
             margin-top: 15px;
             font-size: 18px;
-            color: #0F6;
+            color: var(--success-color);
             font-weight: bold;
         }
 
@@ -626,8 +679,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: rgba(0, 0, 0, 0.95);
-            border: 3px solid #0FF;
+            background: rgba(0, 0, 0, 0.95); /* Kept specific for popups */
+            border: 3px solid var(--primary-color);
             padding: 30px;
             max-width: 500px;
             max-height: 80vh;
@@ -648,7 +701,7 @@
             align-items: center;
             gap: 15px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #0FF;
+            border-bottom: 2px solid var(--primary-color);
             padding-bottom: 15px;
         }
 
@@ -658,13 +711,13 @@
 
         .help-title {
             font-size: 24px;
-            color: #0FF;
+            color: var(--primary-color);
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
         }
 
         .help-xp {
             font-size: 18px;
-            color: #0F6;
+            color: var(--success-color);
             font-weight: bold;
         }
 
@@ -673,7 +726,7 @@
         }
 
         .help-section h3 {
-            color: #0FF;
+            color: var(--primary-color);
             margin-bottom: 10px;
             font-size: 16px;
             text-transform: uppercase;
@@ -726,7 +779,7 @@
         .param-value {
             font-size: 14px;
             font-weight: bold;
-            color: #0FF;
+            color: var(--primary-color);
         }
 
         .molecule-formula {
@@ -741,8 +794,8 @@
 
         .close-help {
             background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #0FF;
-            color: #0FF;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
             padding: 10px 20px;
             font-family: 'Courier New', monospace;
             cursor: pointer;
@@ -830,13 +883,13 @@
         .intro-content {
             max-width: 700px;
             padding: 40px;
-            border: 3px solid #0FF;
+            border: 3px solid var(--primary-color);
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
         }
 
         .intro-title {
             font-size: 36px;
-            color: #0FF;
+            color: var(--primary-color);
             margin-bottom: 20px;
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
         }
@@ -851,8 +904,7 @@
         .intro-question {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
-            color: #FFF;
+            margin-bottom: 20px;            color: var(--text-color);
         }
 
         .intro-answers {
@@ -871,14 +923,43 @@
 
         .intro-answer:hover {
             background: rgba(0, 255, 255, 0.2);
-            border-color: #0FF;
+            border-color: var(--primary-color);
         }
 
         .intro-feedback {
-            color: #F06;
+            color: var(--secondary-color);
             min-height: 20px;
             margin-top: 15px;
             font-weight: bold;
+        }
+
+        /* ABIOGENESIS OVERLAY STYLES */
+        .abiogenesis-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 4000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .abiogenesis-overlay.show {
+            opacity: 1;
+        }
+
+        .abiogenesis-title {
+            font-size: 48px;
+            color: var(--primary-color);
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.9);
+            animation: pulse 4s infinite ease-in-out;
         }
     </style>
 </head>
@@ -893,7 +974,7 @@
     <div class="element-key" id="element-key">
         <h3 onclick="toggleElementKey()">
             Elements
-            <span class="toggle-icon" id="element-toggle">▼</span>
+            <span class="toggle-icon" id="element-toggle">[-]</span>
         </h3>
         <div class="key-content">
             <div class="element-item">
@@ -918,7 +999,7 @@
     <div class="molecule-list" id="molecule-list">
         <h3 onclick="toggleMoleculeList()">
             Molecules
-            <span class="toggle-icon" id="molecule-toggle">▼</span>
+            <span class="toggle-icon" id="molecule-toggle">[-]</span>
         </h3>
         <div class="list-content">
             <div id="molecule-types">
@@ -930,7 +1011,7 @@
     <div class="achievements-panel" id="achievements-panel">
         <h3 onclick="toggleAchievements()">
             Achievements
-            <span class="toggle-icon" id="achievements-toggle">▼</span>
+            <span class="toggle-icon" id="achievements-toggle">[-]</span>
         </h3>
         <div class="achievements-content">
             <div class="achievements-summary">
@@ -944,22 +1025,23 @@
     <!-- ACHIEVEMENT HELP PANEL -->
     <div class="achievement-help" id="achievement-help">
         <div class="help-header">
-            <div class="help-icon" id="help-icon">⚛️</div>
+            <div class="help-icon" id="achievement-help-icon">⚛️</div>
             <div>
-                <div class="help-title" id="help-title">Achievement Help</div>
-                <div class="help-xp" id="help-xp">+0 XP</div>
+                <div class="help-title" id="achievement-help-title">Achievement Help</div>
+                <div class="help-xp" id="achievement-help-xp">+0 XP</div>
             </div>
         </div>
 
+        
         <div class="help-section">
             <h3>Description</h3>
-            <p id="help-description">Description will appear here.</p>
+            <p id="achievement-help-description">Description will appear here.</p>
         </div>
 
         <div class="help-section" id="current-progress-section">
             <h3>Current Progress</h3>
             <div class="current-progress">
-                <div class="progress-info" id="progress-info">Not started</div>
+                <div class="progress-info" id="achievement-help-progress-info">Not started</div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="help-progress-bar" style="width: 0%"></div>
                 </div>
@@ -968,30 +1050,54 @@
 
         <div class="help-section" id="strategy-section">
             <h3>Strategy & Tips</h3>
-            <ul class="strategy-list" id="strategy-list">
+            <ul class="strategy-list" id="achievement-help-strategy-list">
                 <li>Strategy tips will appear here</li>
             </ul>
         </div>
 
         <div class="help-section" id="parameters-section">
             <h3>Recommended Parameters</h3>
-            <div class="parameter-recommendations" id="parameter-recommendations">
+            <div class="parameter-recommendations" id="achievement-help-parameters">
                 <!-- Parameter recommendations will be inserted here -->
             </div>
         </div>
 
         <div class="help-section" id="formula-section">
             <h3>Molecular Formula</h3>
-            <div class="molecule-formula" id="molecule-formula">
+            <div class="molecule-formula" id="achievement-help-formula">
                 Formula will appear here
             </div>
         </div>
 
-        <div class="hint-tip" id="hint-tip">
+        <div class="hint-tip" id="achievement-help-hint">
             Pro tip: Adjust parameters gradually and observe the results!
         </div>
 
         <button class="close-help" onclick="closeHelp()">CLOSE</button>
+    </div>
+
+    <div class="intro-overlay" id="intro-overlay">
+        <div class="intro-content">
+            <h1 class="intro-title">A Note Before You Begin</h1>
+            <p class="intro-text">
+                This is a simulation about **emergence** — the phenomenon where complex results arise from simple rules.
+                You are not in direct control. Your role is to be a scientist: observe, form a hypothesis, adjust the environment, and discover what emerges.
+            </p>
+            <p class="intro-question">What is the core principle of this simulation?</p>
+            <div class="intro-answers">
+                <div class="intro-answer" onclick="checkIntroAnswer('control')">Directly controlling every particle to build structures.</div>
+                <div class="intro-answer" onclick="checkIntroAnswer('recipe')">Following a strict recipe to achieve a single "win" condition.</div>
+                <div class="intro-answer" onclick="checkIntroAnswer('emergence')">Guiding simple rules to see what complex patterns emerge.</div>
+                <div class="intro-answer" onclick="checkIntroAnswer('speed')">Achieving the highest score as quickly as possible.</div>
+            </div>
+            <div class="intro-feedback" id="intro-feedback">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+
+    <div class="abiogenesis-overlay" id="abiogenesis-overlay">
+        <div class="abiogenesis-title" id="abiogenesis-title"></div>
     </div>
 
     <div class="achievement-popup" id="achievement-popup">
@@ -1000,6 +1106,14 @@
         <div class="achievement-popup-subtitle" id="popup-subtitle">First Molecule</div>
         <div class="achievement-popup-desc" id="popup-desc">You've created your first molecule!</div>
         <div class="achievement-popup-xp" id="popup-xp">+50 XP</div>
+    </div>
+
+    <div class="level-up-popup" id="level-up-popup">
+        <div class="level-up-title" id="level-up-title">LEVEL UP!</div>
+        <div class="level-up-subtitle" id="level-up-subtitle">You've reached Level 1!</div>
+        <div class="level-up-unlocks" id="level-up-unlocks">
+            <strong>New Unlock:</strong> Oxygen Particles
+        </div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -1291,7 +1405,9 @@
                     'CHN': 'HCN',
                     'NO': 'NO (Nitric Oxide)',
                     'NNO': 'N₂O',
-                    'NOO': 'NO₂'
+                    'NOO': 'NO₂',
+                    'C2H5NO2': 'Glycine (Amino Acid)',
+                    'C3H6O2': 'Lipid Precursor'
                 };
                 
                 return types[this.type] || this.type;
@@ -1392,6 +1508,20 @@
         let pauseStartTime = 0;
         let animationId = null;
         let totalXP = 0;
+        let currentLevel = 0;
+        let abiogenesisTriggered = false;
+        let thermoTimeInRange = 0;
+        let abiogenesisFocus = false;
+        let abiogenesisFocusTarget = null;
+        let camera = {
+            x: width / 2,
+            y: height / 2,
+            zoom: 1.0,
+            targetX: width / 2,
+            targetY: height / 2,
+            targetZoom: 1.0,
+            lerpFactor: 0.02
+        };
         let particleIdCounter = 0;
 
         const spatialHash = new SpatialHash(50); // Cell size of 50px
@@ -1490,7 +1620,11 @@
                 description: 'Find the perfect temperature (45-55) and hold for 30s',
                 xp: 100,
                 unlocked: false,
-                check: () => false // Special tracking needed
+                check: () => thermoTimeInRange >= 30000, // 30 seconds in ms
+                progress: () => {
+                    const progress = Math.min(100, (thermoTimeInRange / 30000) * 100);
+                    return progress;
+                }
             },
             patient_chemist: {
                 id: 'patient_chemist',
@@ -1520,6 +1654,15 @@
                 unlocked: false,
                 check: () => moleculeTypes.has('N₂ (Nitrogen)')
             },
+            abiogenesis: {
+                id: 'abiogenesis',
+                icon: '🌱',
+                title: 'Abiogenesis',
+                description: 'Witness the emergence of the first proto-cell',
+                xp: 500,
+                unlocked: false,
+                check: () => abiogenesisTriggered
+            },
             prebiotic_soup: {
                 id: 'prebiotic_soup',
                 icon: '🧬',
@@ -1527,8 +1670,8 @@
                 description: 'Create H₂O, NH₃, and HCN (building blocks of life)',
                 xp: 300,
                 unlocked: false,
-                check: () => moleculeTypes.has('H₂O (Water)') && 
-                           moleculeTypes.has('NH₃ (Ammonia)') && 
+                check: () => moleculeTypes.has('H₂O (Water)') &&
+                           moleculeTypes.has('NH₃ (Ammonia)') &&
                            moleculeTypes.has('HCN')
             },
             master_chemist: {
@@ -1776,6 +1919,58 @@
             }
         };
 
+        const LEVEL_DEFINITIONS = [
+            { // Level 0
+                name: "Particle Soup",
+                goal: "Form your first molecule.",
+                xp_reward: 100,
+                unlocks: "Oxygen particles become available.",
+                checkCompletion: () => molecules.length >= 1,
+                getProgress: () => {
+                    if (molecules.length > 0) return 100;
+                    return Math.min(99, (collisionCount / 1000) * 100);
+                }
+            },
+            { // Level 1
+                name: "Molecular Weaver",
+                goal: "Create H₂O (Water).",
+                xp_reward: 150,
+                unlocks: "Carbon and Nitrogen particles become available.",
+                checkCompletion: () => moleculeTypes.has('H₂O (Water)'),
+                getProgress: () => {
+                    const totalMoleculesNeeded = 10;
+                    const waterProgress = moleculeTypes.has('H₂O (Water)') ? 50 : 0;
+                    const moleculeCountProgress = Math.min(50, (molecules.length / totalMoleculesNeeded) * 50);
+                    return waterProgress + moleculeCountProgress;
+                }
+            },
+            { // Level 2
+                name: "Prebiotic Soup",
+                goal: "Create the building blocks of life: H₂O, NH₃, and HCN.",
+                xp_reward: 300,
+                unlocks: "Higher bonding complexity.",
+                checkCompletion: () => moleculeTypes.has('H₂O (Water)') && moleculeTypes.has('NH₃ (Ammonia)') && moleculeTypes.has('HCN'),
+                getProgress: () => {
+                    let progress = 0;
+                    if (moleculeTypes.has('H₂O (Water)')) progress += 33;
+                    if (moleculeTypes.has('NH₃ (Ammonia)')) progress += 33;
+                    if (moleculeTypes.has('HCN')) progress += 33;
+                    return progress;
+                }
+            },
+            { // Level 3
+                name: "Life Seeder",
+                goal: "Witness the miracle of abiogenesis.",
+                xp_reward: 1000,
+                unlocks: "LifeForge and the next era of evolution!",
+                checkCompletion: () => abiogenesisTriggered,
+                getProgress: () => {
+                    let progress = (moleculeTypes.has('Glycine (Amino Acid)') ? 50 : 0) + (moleculeTypes.has('Lipid Precursor') ? 50 : 0);
+                    return progress;
+                }
+            }
+        ];
+
         let achievementsUnlocked = new Set();
 
         // History tracking for export
@@ -1831,15 +2026,19 @@
         function adjustParticleCount() {
             const numToAdd = density - particles.length;
             if (numToAdd > 0) {
-                for (let i = 0; i < numToAdd; i++) {
-                // Weighted distribution: more H, less heavy elements
-                const rand = Math.random();
-                let type;
-                if (rand < 0.70) type = ELEMENT_TYPES.HYDROGEN;
-                else if (rand < 0.85) type = ELEMENT_TYPES.CARBON;
-                else if (rand < 0.95) type = ELEMENT_TYPES.OXYGEN;
-                else type = ELEMENT_TYPES.NITROGEN;
-                particles.push(new Particle(null, null, type));
+                for (let i = 0; i < numToAdd; i++) { // Weighted distribution based on level
+                    const rand = Math.random();
+                    let type = ELEMENT_TYPES.HYDROGEN; // Default
+
+                    if (currentLevel === 1) { // H, O
+                        if (rand > 0.7) type = ELEMENT_TYPES.OXYGEN;
+                    } else if (currentLevel >= 2) { // H, O, C, N
+                        if (rand < 0.70) type = ELEMENT_TYPES.HYDROGEN;
+                        else if (rand < 0.85) type = ELEMENT_TYPES.CARBON;
+                        else if (rand < 0.95) type = ELEMENT_TYPES.OXYGEN;
+                        else type = ELEMENT_TYPES.NITROGEN;
+                    }
+                    particles.push(new Particle(null, null, type));
                 }
             } else if (numToAdd < 0) {
                 const numToRemove = -numToAdd;
@@ -1916,6 +2115,8 @@
             particleIdCounter = 0;
             moleculeTypes.clear();
             collisionCount = 0;
+            abiogenesisTriggered = false;
+            currentLevel = 0;
             firstMoleculeFormed = false; // This should be reset on simulation reset
             isPaused = true; // Start paused to show tutorial
             startTime = Date.now();
@@ -1929,6 +2130,7 @@
             document.getElementById('pause-btn').textContent = '⏸ PAUSE';
             document.getElementById('status-dot').className = 'status-dot';
             document.getElementById('status-text').textContent = 'RUNNING';
+            updateLevelUI();
             document.getElementById('level-progress').style.width = '0%';
             
             simulationHistory = {
@@ -2202,7 +2404,50 @@
             return allowedBonds.includes(bond);
         }
 
-        function checkCollisions() {
+        function resolveCollision(p1, p2) {
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance === 0) distance = 0.001; // prevent division by zero
+
+            // Normal vector (direction of collision)
+            const nx = dx / distance;
+            const ny = dy / distance;
+
+            // Tangent vector
+            const tx = -ny;
+            const ty = nx;
+
+            // Project velocities onto normal and tangent vectors
+            const dpTan1 = p1.vx * tx + p1.vy * ty;
+            const dpTan2 = p2.vx * tx + p2.vy * ty;
+
+            const dpNorm1 = p1.vx * nx + p1.vy * ny;
+            const dpNorm2 = p2.vx * nx + p2.vy * ny;
+
+            // Conservation of momentum in 1D (along the normal)
+            const m1 = (dpNorm1 * (p1.mass - p2.mass) + 2 * p2.mass * dpNorm2) / (p1.mass + p2.mass);
+            const m2 = (dpNorm2 * (p2.mass - p1.mass) + 2 * p1.mass * dpNorm1) / (p1.mass + p2.mass);
+
+            // Update velocities
+            p1.vx = tx * dpTan1 + nx * m1;
+            p1.vy = ty * dpTan1 + ny * m1;
+            p2.vx = tx * dpTan2 + nx * m2;
+            p2.vy = ty * dpTan2 + ny * m2;
+
+            // Separate overlapping particles to prevent sticking
+            const overlap = (p1.size + p2.size + 2) - distance;
+            if (overlap > 0) {
+                const separationX = nx * overlap * 0.5;
+                const separationY = ny * overlap * 0.5;
+                p1.x -= separationX;
+                p1.y -= separationY;
+                p2.x += separationX;
+                p2.y += separationY;
+            }
+        }
+
+        function checkCollisions(tempFactor) {
             // 1. Clear and rebuild the hash grid each frame
             spatialHash.clear();
             for (const particle of particles) {
@@ -2235,10 +2480,7 @@
                         ctx.arc(p1.x, p1.y, 4, 0, Math.PI * 2);
                         ctx.fill();
 
-                        // Bonding probability is highest around 50K and lower at the edges.
-                        const optimalTemp = 50;
-                        const tempDifference = Math.abs(temperature - optimalTemp);
-                        const tempFactor = Math.max(0, 1 - (tempDifference / 25)); // Max reduction at 25 and 75
+                        // Bonding probability is highest around 50K and lower at the edges.                        
                         const bondingChance = 0.005 * tempFactor;
 
                         // Check for bonding
@@ -2266,40 +2508,130 @@
                                 moleculeName: molecule.name
                             });
                         } else {
-                            // Elastic collision
-                            const angle = Math.atan2(dy, dx);
-                            const sin = Math.sin(angle);
-                            const cos = Math.cos(angle);
-
-                            const vx1 = p1.vx * cos + p1.vy * sin;
-                            const vy1 = p1.vy * cos - p1.vx * sin;
-                            const vx2 = p2.vx * cos + p2.vy * sin;
-                            const vy2 = p2.vy * cos - p2.vx * sin;
-
-                            // Mass-based collision
-                            const m1 = p1.mass;
-                            const m2 = p2.mass;
-                            const vx1_final = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2);
-                            const vx2_final = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2);
-
-                            p1.vx = vx1_final * cos - vy1 * sin;
-                            p1.vy = vy1 * cos + vx1_final * sin;
-                            p2.vx = vx2_final * cos - vy2 * sin;
-                            p2.vy = vy2 * cos + vx2_final * sin;
-
-                            // Separate particles
-                            const overlap = collisionDist - dist;
-                            const separateX = (dx / dist) * overlap * 0.5;
-                            const separateY = (dy / dist) * overlap * 0.5;
-                            p1.x += separateX;
-                            p1.y += separateY;
-                            p2.x -= separateX;
-                            p2.y -= separateY;
+                            resolveCollision(p1, p2);
                         }
                     }
                 }
             }
         }
+
+        function checkMoleculeReactions() {
+            if (currentLevel < 2) return; // Reactions start becoming important in level 2
+
+            for (const molecule of molecules) {
+                if (molecule.particles.length >= 10) continue; // Cap complexity for performance
+
+                const nearbyParticles = spatialHash.getNearby(molecule.particles[0]);
+                for (const particle of nearbyParticles) {
+                    if (particle.bonded) continue;
+
+                    const dist = Math.sqrt(Math.pow(molecule.x - particle.x, 2) + Math.pow(molecule.y - particle.y, 2));
+                    if (dist < 30) { // Interaction radius for molecule-particle
+                        const reactionChance = 0.0001 * (temperature / 50); // Simple temp factor for now
+                        if (Math.random() < reactionChance) {
+                            // A new particle joins the molecule
+                            const oldMoleculeName = molecule.name;
+                            moleculeTypes.set(oldMoleculeName, (moleculeTypes.get(oldMoleculeName) || 1) - 1);
+                            if (moleculeTypes.get(oldMoleculeName) <= 0) {
+                                moleculeTypes.delete(oldMoleculeName);
+                            }
+
+                            particle.bonded = true;
+                            particle.molecule = molecule;
+                            molecule.particles.push(particle);
+                            
+                            // Recalculate properties
+                            molecule.type = molecule.getMoleculeType();
+                            molecule.name = molecule.getMoleculeName();
+                            
+                            const newMoleculeName = molecule.name;
+                            moleculeTypes.set(newMoleculeName, (moleculeTypes.get(newMoleculeName) || 0) + 1);
+                            
+                            updateMoleculeList();
+                            return; // One reaction per frame to avoid chaos
+                        }
+                    }
+                }
+            }
+        }
+
+        function transitionToLifeForge(protoCell) {
+            // This function will be expanded to initialize the LifeForge simulation
+            abiogenesisFocus = false;
+            camera.targetX = width / 2;
+            camera.targetY = height / 2;
+            camera.targetZoom = 1.0;
+
+            console.log("Transitioning to LifeForge with proto-cell:", protoCell);
+            
+            // For now, we can just display a message and reset
+            setTimeout(() => {
+                const overlay = document.getElementById('abiogenesis-overlay');
+                overlay.classList.remove('show');
+                alert("Congratulations! You've reached LifeForge. The simulation will now reset to demonstrate the complete loop. The next phase of development starts here!");
+                resetSimulation();
+            }, 5000);
+        }
+
+        class AbiogenesisDetector {
+            check() {
+                if (abiogenesisTriggered || currentLevel < 3) return;
+
+                const hasLipids = (moleculeTypes.get('Lipid Precursor') || 0) > 5;
+                const hasAminoAcids = (moleculeTypes.get('Glycine (Amino Acid)') || 0) > 5;
+                const hasWater = moleculeTypes.has('H₂O (Water)')
+
+                if (hasLipids && hasAminoAcids && hasWater && Math.random() < 0.0001) { // Made it rarer for dramatic effect
+                    this.trigger();
+                }
+            }
+
+            trigger() {
+                if (abiogenesisTriggered) return;
+                abiogenesisTriggered = true;
+                console.log("ABIOGENESIS TRIGGERED!");
+                
+                // 1. Pause the simulation immediately
+                if (!isPaused) {
+                    togglePause();
+                }
+
+                // 2. Set up the camera focus
+                abiogenesisFocus = true;
+                abiogenesisFocusTarget = molecules.find(m => m.name === 'Glycine (Amino Acid)') || molecules[molecules.length - 1];
+                if (abiogenesisFocusTarget) {
+                    camera.targetZoom = 8.0; // Zoom in 8x
+                }
+
+                // 2. Find a "proto-cell" to focus on (a complex molecule)
+                const protoCell = molecules.find(m => m.name === 'Glycine (Amino Acid)') || molecules[molecules.length - 1];
+
+                // 3. Start the celebration sequence
+                const overlay = document.getElementById('abiogenesis-overlay');
+                const title = document.getElementById('abiogenesis-title');
+                
+                overlay.classList.add('show');
+
+                setTimeout(() => {
+                    title.textContent = "From chaos, order emerges...";
+                }, 1000);
+
+                setTimeout(() => {
+                    title.textContent = "From chemistry, biology...";
+                }, 5000);
+
+                setTimeout(() => {
+                    title.textContent = "And life... ignites.";
+                    unlockAchievement('abiogenesis'); // Unlock the achievement at the peak moment
+                }, 9000);
+
+                // 4. After the sequence, transition to LifeForge
+                setTimeout(() => {
+                    transitionToLifeForge(protoCell);
+                }, 14000);
+            }
+        }
+        const abiogenesisDetector = new AbiogenesisDetector();
 
         // Cache DOM elements for stats
         const statElements = {
@@ -2308,6 +2640,13 @@
             uniqueMolecules: document.getElementById('unique-molecules'),
             collisionCount: document.getElementById('collision-count'),
             avgEnergy: document.getElementById('avg-energy')
+        };
+
+        // Cache DOM elements for popups
+        const levelUpPopupElements = {
+            popup: document.getElementById('level-up-popup'),
+            subtitle: document.getElementById('level-up-subtitle'),
+            unlocks: document.getElementById('level-up-unlocks')
         };
 
         function updateStats() {
@@ -2323,33 +2662,75 @@
             statElements.avgEnergy.textContent = avgEnergy.toFixed(1);
         }
 
-        function updateLevelProgress() {
-            let progress = 0;
-            const collisionMilestone = 1000;
-            const moleculeMilestone = 10;
-
-            if (molecules.length > 0) {
-                // Progress from 50% to 100% based on molecule count
-                progress = 50 + Math.min(50, (molecules.length / moleculeMilestone) * 50);
-            } else if (collisionCount > 0) {
-                // Progress from 0% to 50% based on collisions, but cap at 50%
-                // to ensure molecule formation provides the next jump.
-                progress = Math.min(50, (collisionCount / collisionMilestone) * 50);
+        function updateLevelUI() {
+            const levelTitle = document.querySelector('.level-title');
+            if (levelTitle) {
+                levelTitle.textContent = `ATOMICFORGE - Level ${currentLevel}`;
             }
+        }
 
+        function updateLevelProgress() {
+            if (currentLevel >= LEVEL_DEFINITIONS.length) return; // Max level reached
+
+            const levelDef = LEVEL_DEFINITIONS[currentLevel];
+            const progress = levelDef.getProgress();
             document.getElementById('level-progress').style.width = progress + '%';
+
+            if (progress >= 100 && levelDef.checkCompletion()) {
+                levelUp();
+            }
+        }
+
+        function levelUp() {
+            currentLevel++;
+            totalXP += LEVEL_DEFINITIONS[currentLevel - 1].xp_reward;
+            updateLevelUI();
+            showLevelUp(currentLevel);
+        }
+
+        function showLevelUp(newLevel) {
+            levelUpPopupElements.subtitle.textContent = `You've reached Level ${newLevel}!`;
+            if (newLevel < LEVEL_DEFINITIONS.length) {
+                levelUpPopupElements.unlocks.innerHTML = `<strong>New Unlock:</strong> ${LEVEL_DEFINITIONS[newLevel-1].unlocks}`;
+            } else {
+                levelUpPopupElements.unlocks.innerHTML = `<strong>Congratulations!</strong> You have reached the maximum level for this demo.`;
+            }
+            levelUpPopupElements.popup.classList.add('show');
+            setTimeout(() => levelUpPopupElements.popup.classList.remove('show'), 4000);
         }
 
         // Animation loop
         let lastSnapshotTime = 0;
         
         function animate() {
-            animationId = requestAnimationFrame(animate);
-            
             updateTimer();
             
-            if (isPaused) return;
+            if (isPaused && !abiogenesisFocus) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
+
+            ctx.save();
+
+            // Camera movement and zoom
+            if (abiogenesisFocus && abiogenesisFocusTarget) {
+                camera.targetX = abiogenesisFocusTarget.x;
+                camera.targetY = abiogenesisFocusTarget.y;
+            }
+            camera.x += (camera.targetX - camera.x) * camera.lerpFactor;
+            camera.y += (camera.targetY - camera.y) * camera.lerpFactor;
+            camera.zoom += (camera.targetZoom - camera.zoom) * camera.lerpFactor;
+
+            // Apply camera transform
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(camera.zoom, camera.zoom);
+            ctx.translate(-camera.x, -camera.y);
             
+            // Calculate temperature factor once per frame for use in other functions
+            const optimalTemp = 50;
+            const tempDifference = Math.abs(temperature - optimalTemp);
+            const tempFactor = Math.max(0, 1 - (tempDifference / 25)); // Max reduction at 25 and 75
+
             // Take periodic snapshots
             const currentTime = getElapsedTime();
             if (currentTime - lastSnapshotTime > 10000) {
@@ -2367,21 +2748,44 @@
             }
             
             // Clear with trail effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.fillRect(0, 0, width, height);
+            const inverseZoom = 1 / camera.zoom;
+            ctx.fillStyle = abiogenesisFocus ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(camera.x - (width / 2) * inverseZoom, camera.y - (height / 2) * inverseZoom, width * inverseZoom, height * inverseZoom);
 
             // Update and draw particles
             for (let particle of particles) {
-                particle.update(temperature, energyInput);
+                if (!isPaused) {
+                    particle.update(temperature, energyInput);
+                }
+                if (abiogenesisFocus && (!particle.molecule || particle.molecule.id !== abiogenesisFocusTarget.id)) {
+                    ctx.globalAlpha = 0.1; // Fade out non-target particles
+                }
                 particle.draw();
+                ctx.globalAlpha = 1.0;
             }
 
             // Check collisions
-            checkCollisions();
+            if (!isPaused) {
+                checkCollisions(tempFactor);
+            }
+
+            // Check for more complex reactions
+            if (!isPaused) {
+                checkMoleculeReactions();
+            }
+
+            // Check for the ultimate emergence
+            if (!isPaused) {
+                abiogenesisDetector.check();
+            }
 
             // Draw molecules
             for (let molecule of molecules) {
+                if (abiogenesisFocus && molecule.id !== abiogenesisFocusTarget.id) {
+                    ctx.globalAlpha = 0.1; // Fade out non-target molecules
+                }
                 molecule.draw();
+                ctx.globalAlpha = 1.0;
             }
 
             // Update stats
@@ -2390,8 +2794,23 @@
             // Update Level Progress
             updateLevelProgress();
 
+            // Special achievement tracking
+            // Thermodynamist: Keep temp between 45-55 for 30s
+            if (temperature >= 45 && temperature <= 55) {
+                if (!isPaused) {
+                    // This is a simple way to track time. A more robust way would use deltaTime.
+                    // Assuming ~60fps, 16.67ms per frame.
+                    thermoTimeInRange += 1000 / 60; 
+                }
+            } else {
+                thermoTimeInRange = 0; // Reset if temp goes out of range
+            }
+
             // Check achievements every frame
             checkAchievements();
+
+            ctx.restore();
+            animationId = requestAnimationFrame(animate);
         }
 
         // ACHIEVEMENT HELP FUNCTIONS
@@ -2402,20 +2821,20 @@
             if (!help) return;
 
             // Update help content
-            document.getElementById('help-icon').textContent = achievement.icon;
-            document.getElementById('help-title').textContent = achievement.title;
-            document.getElementById('help-xp').textContent = `+${achievement.xp} XP`;
-            document.getElementById('help-description').textContent = help.description;
+            document.getElementById('achievement-help-icon').textContent = achievement.icon;
+            document.getElementById('achievement-help-title').textContent = achievement.title;
+            document.getElementById('achievement-help-xp').textContent = `+${achievement.xp} XP`;
+            document.getElementById('achievement-help-description').textContent = help.description;
             
             // Update progress
             updateHelpProgress(achievementId);
             
             // Update strategy
-            const strategyList = document.getElementById('strategy-list');
+            const strategyList = document.getElementById('achievement-help-strategy-list');
             strategyList.innerHTML = help.strategy.map(item => `<li>${item}</li>`).join('');
             
             // Update parameters
-            const paramsDiv = document.getElementById('parameter-recommendations');
+            const paramsDiv = document.getElementById('achievement-help-parameters');
             paramsDiv.innerHTML = `
                 <div class="param-item">
                     <div class="param-label">Temperature</div>
@@ -2432,10 +2851,10 @@
             `;
             
             // Update formula
-            document.getElementById('molecule-formula').textContent = help.formula;
+            document.getElementById('achievement-help-formula').textContent = help.formula;
             
             // Show/hide sections based on achievement type
-            const hintTip = document.getElementById('hint-tip');
+            const hintTip = document.getElementById('achievement-help-hint');
             
             // Special cases
             if (achievementId === 'thermodynamist') {
@@ -2454,7 +2873,7 @@
 
         function updateHelpProgress(achievementId) {
             const achievement = ACHIEVEMENTS[achievementId];
-            const progressInfo = document.getElementById('progress-info');
+            const progressInfo = document.getElementById('achievement-help-progress-info');
             const progressBar = document.getElementById('help-progress-bar');
             
             if (achievement.unlocked) {
@@ -2532,7 +2951,23 @@
                     const hasCyanide = moleculeTypes.has('HCN');
                     current = (hasWater ? 1 : 0) + (hasAmmonia ? 1 : 0) + (hasCyanide ? 1 : 0);
                     target = 3;
-                    progressText = `Building blocks: ${hasWater ? 'H₂O' : ''} ${hasAmmonia ? 'NH₃' : ''} ${hasCyanide ? 'HCN' : ''}`.trim() || "None formed yet";
+                    let presentMolecules = [];
+                    if (hasWater) presentMolecules.push('H₂O');
+                    if (hasAmmonia) presentMolecules.push('NH₃');
+                    if (hasCyanide) presentMolecules.push('HCN');
+                    
+                    let missingMolecules = [];
+                    if (!hasWater) missingMolecules.push('H₂O');
+                    if (!hasAmmonia) missingMolecules.push('NH₃');
+                    if (!hasCyanide) missingMolecules.push('HCN');
+
+                    if (current === 0) {
+                        progressText = "None formed yet. Need H₂O, NH₃, HCN.";
+                    } else if (current === target) {
+                        progressText = "All building blocks formed!";
+                    } else {
+                        progressText = `Formed: ${presentMolecules.join(', ')}. Missing: ${missingMolecules.join(', ')}.`;
+                    }
                     break;
                 case 'master_chemist':
                     const unlocked = Object.values(ACHIEVEMENTS).filter(a => a.unlocked && a.id !== 'master_chemist').length;
@@ -2613,21 +3048,21 @@
             const panel = document.getElementById('element-key');
             const icon = document.getElementById('element-toggle');
             panel.classList.toggle('minimized');
-            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+            icon.textContent = panel.classList.contains('minimized') ? '[+]' : '[-]';
         }
 
         function toggleMoleculeList() {
             const panel = document.getElementById('molecule-list');
             const icon = document.getElementById('molecule-toggle');
             panel.classList.toggle('minimized');
-            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+            icon.textContent = panel.classList.contains('minimized') ? '[+]' : '[-]';
         }
 
         function toggleAchievements() {
             const panel = document.getElementById('achievements-panel');
             const icon = document.getElementById('achievements-toggle');
             panel.classList.toggle('minimized');
-            icon.textContent = panel.classList.contains('minimized') ? '▶' : '▼';
+            icon.textContent = panel.classList.contains('minimized') ? '[+]' : '[-]';
         }
 
         function checkAchievements() {
@@ -2734,6 +3169,7 @@
         // Set initial pause state for tutorial
         document.getElementById('status-dot').className = 'status-dot paused';
         document.getElementById('status-text').textContent = 'PAUSED';
+        updateLevelUI();
         
         simulationHistory.events.push({
             time: 0,
