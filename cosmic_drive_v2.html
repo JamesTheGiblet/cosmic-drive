@@ -46,6 +46,23 @@
             overflow-y: auto;
         }
 
+        #protoforge-controls {
+            display: none; /* Hidden by default */
+        }
+
+        .protoforge-status {
+            position: fixed;
+            top: 150px;
+            left: 20px;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 50;
+            max-width: 250px;
+            display: none; /* Hidden by default */
+        }
+
         .control-group {
             margin-bottom: 15px;
         }
@@ -242,6 +259,15 @@
         button.success:hover {
             background: rgba(0, 255, 102, 0.4);
             box-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
+        }
+
+        button.toggled {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+        button.toggled:hover {
+            background: #3ff;
         }
 
         .button-group {
@@ -479,6 +505,29 @@
         .toggle-icon {
             font-size: 14px;
             margin-left: 10px;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--primary-color);
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .toggle-icon:hover {
+            background: rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .toggle-icon:active {
+            transform: scale(0.9);
+            background: var(--primary-color);
+            color: var(--bg-color);
         }
 
         .achievements-panel {
@@ -844,6 +893,28 @@
             font-size: 12px;
         }
 
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .param-item.in-range {
+            background-color: rgba(0, 255, 102, 0.15);
+            border-color: rgba(0, 255, 102, 0.4);
+        }
+
+        .param-item.out-of-range {
+            background-color: rgba(255, 0, 102, 0.15);
+            border-color: rgba(255, 0, 102, 0.4);
+        }
+
+        .param-status {
+            font-size: 18px;
+            margin-left: 10px;
+        }
+
         .hint-tip:before {
             content: "💡 ";
             font-weight: bold;
@@ -875,10 +946,11 @@
             transition: opacity 1s ease;
         }
 
-        .intro-overlay.hidden {
+        .intro-overlay.hiding {
             opacity: 0;
             pointer-events: none;
         }
+
 
         .intro-content {
             max-width: 700px;
@@ -886,12 +958,31 @@
             border: 3px solid var(--primary-color);
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
         }
+        
+        #intro-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
 
         .intro-title {
-            font-size: 36px;
+            font-size: 48px;
             color: var(--primary-color);
             margin-bottom: 20px;
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+            animation: glitch 5s infinite;
+        }
+
+        .intro-subtitle {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
         }
 
         .intro-text {
@@ -924,6 +1015,12 @@
         .intro-answer:hover {
             background: rgba(0, 255, 255, 0.2);
             border-color: var(--primary-color);
+        }
+
+        .intro-answer.correct {
+            background: rgba(0, 255, 102, 0.3);
+            border-color: var(--success-color);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
         }
 
         .intro-feedback {
@@ -961,7 +1058,25 @@
             text-shadow: 0 0 30px rgba(0, 255, 255, 0.9);
             animation: pulse 4s infinite ease-in-out;
         }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.7), 0 0 5px #0FF; transform: none; }
+            5% { transform: skew(-0.5deg, -0.2deg); }
+            10% { transform: none; }
+            15% { transform: skew(0.5deg, 0.2deg); }
+            20% { transform: none; }
+            49% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.7), 0 0 5px #0FF; }
+            50% { text-shadow: 0 0 15px rgba(255, 0, 102, 0.7), 0 0 5px #F06; transform: translateX(-2px); }
+            51% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.7), 0 0 5px #0FF; transform: translateX(2px); }
+            52% { transform: none; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="level-indicator">
@@ -1077,8 +1192,10 @@
     </div>
 
     <div class="intro-overlay" id="intro-overlay">
+        <canvas id="intro-canvas"></canvas>
         <div class="intro-content">
-            <h1 class="intro-title">A Note Before You Begin</h1>
+            <h1 class="intro-title">COSMIC DRIVE</h1>
+            <p class="intro-subtitle">ATOMICFORGE</p>
             <p class="intro-text">
                 This is a simulation about **emergence** — the phenomenon where complex results arise from simple rules.
                 You are not in direct control. Your role is to be a scientist: observe, form a hypothesis, adjust the environment, and discover what emerges.
@@ -1157,7 +1274,29 @@
             <button id="pause-btn" onclick="togglePause()">⏸ PAUSE</button>
             <button id="reset-btn" class="danger" onclick="resetSimulation()">↻ RESET</button>
             <button id="export-btn" class="success" onclick="exportData()">💾 EXPORT DATA</button>
+            <button id="focus-toggle-btn" onclick="toggleFocusMode()">🔬 FOCUS: OFF</button>
             <button id="export-img-btn" class="success" onclick="exportImage()">📷 SAVE IMAGE</button>
+        </div>
+
+        <div id="protoforge-controls">
+            <div class="control-group">
+                <label>
+                    <span>🌡️ Nutrient Temp</span>
+                    <input type="range" id="proto-temperature" min="0" max="100" value="50">
+                    <span class="value" id="proto-temp-value">50</span>
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <span>⚡️ Energy Flux</span>
+                    <input type="range" id="proto-energy" min="0" max="100" value="20">
+                    <span class="value" id="proto-energy-value">20</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="protoforge-status" id="protoforge-status">
+            <h3>Proto-Cell Status</h3>
         </div>
         
         <div class="control-group">
@@ -1363,6 +1502,11 @@
                 this.formed = Date.now();
                 this.stable = true;
                 
+                // Proto-cell properties
+                this.energy = 100;
+                this.integrity = 100;
+                this.replications = 0;
+
                 // Determine molecule type
                 this.type = this.getMoleculeType();
                 this.name = this.getMoleculeName();
@@ -1522,6 +1666,19 @@
             targetZoom: 1.0,
             lerpFactor: 0.02
         };
+        let focusOnNewMolecules = false;
+        let focusTarget = null;
+        let currentHelpAchievementId = null;
+
+        const GameState = {
+            INTRO: 'INTRO',
+            ATOMICFORGE: 'ATOMICFORGE',
+            PROTOFORGE: 'PROTOFORGE',
+            LIFEFORGE: 'LIFEFORGE'
+        };
+        let currentGameState = GameState.INTRO;
+        let protoCell = null;
+
         let particleIdCounter = 0;
 
         const spatialHash = new SpatialHash(50); // Cell size of 50px
@@ -1758,6 +1915,7 @@
                     "Both elements needed in simulation",
                     "Can be rare depending on element distribution"
                 ],
+                hint: "Creating Cyanide (CN) is a step towards Hydrogen Cyanide (HCN), a key component for prebiotic soup.",
                 parameters: {
                     temperature: "45-65°K",
                     density: "200-300",
@@ -1891,7 +2049,8 @@
                     "Most challenging achievement!",
                     "Need all element types present",
                     "Balance parameters carefully",
-                    "May require multiple parameter adjustments",
+                    "Try creating H₂O and NH₃ first in the 50-70°K range.",
+                    "HCN (Hydrogen Cyanide) often requires slightly higher energy. Try creating CN (Cyanide) first, then see if it bonds with Hydrogen.",
                     "Focus on one molecule at a time"
                 ],
                 parameters: {
@@ -1997,6 +2156,8 @@
                 value: temperature
             });
         });
+        document.getElementById('proto-temperature').addEventListener('input', (e) => { if(protoCell) protoCell.temperature = parseInt(e.target.value); document.getElementById('proto-temp-value').textContent = e.target.value; });
+        document.getElementById('temperature').addEventListener('input', updateRealTimeHelp);
 
         document.getElementById('density').addEventListener('input', (e) => {
             density = parseInt(e.target.value);
@@ -2010,6 +2171,8 @@
                 value: density
             });
         });
+        document.getElementById('proto-energy').addEventListener('input', (e) => { if(protoCell) protoCell.energyFlux = parseInt(e.target.value); document.getElementById('proto-energy-value').textContent = e.target.value; });
+        document.getElementById('density').addEventListener('input', updateRealTimeHelp);
 
         document.getElementById('energy').addEventListener('input', (e) => {
             energyInput = parseInt(e.target.value);
@@ -2022,6 +2185,7 @@
                 value: energyInput
             });
         });
+        document.getElementById('energy').addEventListener('input', updateRealTimeHelp);
 
         function adjustParticleCount() {
             const numToAdd = density - particles.length;
@@ -2059,11 +2223,16 @@
         function checkIntroAnswer(answer) {
             const feedbackEl = document.getElementById('intro-feedback');
             if (answer === 'emergence') {
+                document.querySelector('.intro-answer[onclick*="emergence"]').classList.add('correct');
                 feedbackEl.textContent = 'Correct. Welcome, Scientist.';
                 feedbackEl.style.color = '#0F6';
                 setTimeout(() => {
-                    document.getElementById('intro-overlay').classList.add('hidden');
+                    document.getElementById('intro-overlay').classList.add('hiding');
                 }, 1500);
+                setTimeout(() => {
+                    document.getElementById('intro-overlay').style.display = 'none';
+                }, 2500); // Hide after transition
+                currentGameState = GameState.ATOMICFORGE;
             } else {
                 feedbackEl.textContent = 'Not quite. The goal is observation and guidance, not direct control. Please try again.';
                 feedbackEl.style.color = '#F06';
@@ -2118,6 +2287,10 @@
             abiogenesisTriggered = false;
             currentLevel = 0;
             firstMoleculeFormed = false; // This should be reset on simulation reset
+            currentGameState = GameState.INTRO;
+            document.getElementById('atomicforge-controls').style.display = 'block';
+            document.getElementById('protoforge-controls').style.display = 'none';
+            document.getElementById('protoforge-status').style.display = 'none';
             isPaused = true; // Start paused to show tutorial
             startTime = Date.now();
             elapsedTime = 0;
@@ -2152,11 +2325,36 @@
             // Show tutorial again on reset
             document.getElementById('tutorial').style.display = 'block';
             // Show intro again on reset
+            // Show intro again on reset, but don't change its class if it's already hiding
             const intro = document.getElementById('intro-overlay');
             intro.classList.remove('hidden');
             document.getElementById('intro-feedback').innerHTML = '&nbsp;';
 
             updateMoleculeList();
+        }
+
+        let focusResetTimer = null;
+        function setCameraFocus(target, zoomLevel = 3.0, duration = 5000) {
+            focusTarget = target;
+            camera.targetZoom = zoomLevel;
+
+            if (focusResetTimer) {
+                clearTimeout(focusResetTimer);
+            }
+
+            focusResetTimer = setTimeout(() => {
+                focusTarget = null;
+                camera.targetX = width / 2;
+                camera.targetY = height / 2;
+                camera.targetZoom = 1.0;
+            }, duration);
+        }
+
+        function toggleFocusMode() {
+            focusOnNewMolecules = !focusOnNewMolecules;
+            const btn = document.getElementById('focus-toggle-btn');
+            btn.textContent = `🔬 FOCUS: ${focusOnNewMolecules ? 'ON' : 'OFF'}`;
+            btn.classList.toggle('toggled', focusOnNewMolecules);
         }
 
         function getElapsedTime() {
@@ -2547,6 +2745,10 @@
                             const newMoleculeName = molecule.name;
                             moleculeTypes.set(newMoleculeName, (moleculeTypes.get(newMoleculeName) || 0) + 1);
                             
+                            if (focusOnNewMolecules) {
+                                setCameraFocus(molecule, 4.0);
+                            }
+
                             updateMoleculeList();
                             return; // One reaction per frame to avoid chaos
                         }
@@ -2555,20 +2757,112 @@
             }
         }
 
+        function updateRealTimeHelp() {
+            if (!currentHelpAchievementId) return;
+
+            const helpData = ACHIEVEMENT_HELP[currentHelpAchievementId];
+            if (!helpData) return;
+
+            // Update progress
+            updateHelpProgress(currentHelpAchievementId, helpData);
+
+            // Update parameter highlighting
+            const params = helpData.parameters;
+            if (params) {
+                updateParamHighlight('temperature', temperature, params.temperature);
+                updateParamHighlight('density', density, params.density);
+                updateParamHighlight('energy', energyInput, params.energy);
+            }
+        }
+
+        function updateParamHighlight(paramName, currentValue, recommendedValue) {
+            const paramElement = document.getElementById(`help-param-${paramName}`);
+            if (!paramElement) return;
+
+            const statusElement = paramElement.querySelector('.param-status');
+            paramElement.classList.remove('in-range', 'out-of-range');
+
+            if (recommendedValue.toLowerCase() === 'any') {
+                statusElement.textContent = '';
+                return;
+            }
+
+            let min, max;
+            if (recommendedValue.includes('-')) {
+                [min, max] = recommendedValue.match(/\d+/g).map(Number);
+            } else if (recommendedValue.includes('+')) {
+                min = Number(recommendedValue.match(/\d+/)[0]);
+                max = Infinity;
+            } else {
+                min = max = Number(recommendedValue.match(/\d+/)[0]);
+            }
+
+            if (currentValue >= min && currentValue <= max) {
+                paramElement.classList.add('in-range');
+                statusElement.textContent = '✓';
+                statusElement.style.color = 'var(--success-color)';
+            } else {
+                paramElement.classList.add('out-of-range');
+                if (currentValue < min) {
+                    statusElement.textContent = '▲'; // Needs to go up
+                } else {
+                    statusElement.textContent = '▼'; // Needs to go down
+                }
+                statusElement.style.color = 'var(--warning-color)';
+            }
+        }
+
         function transitionToLifeForge(protoCell) {
             // This function will be expanded to initialize the LifeForge simulation
+        }
+
+        function transitionToProtoForge(createdProtoCell) {
+            currentGameState = GameState.PROTOFORGE;
+            protoCell = createdProtoCell;
+            
+            // Set camera focus on the new proto-cell
             abiogenesisFocus = false;
             camera.targetX = width / 2;
             camera.targetY = height / 2;
             camera.targetZoom = 1.0;
+            setCameraFocus(protoCell, 6.0, 999999); // Long duration focus
 
             console.log("Transitioning to LifeForge with proto-cell:", protoCell);
+            // Hide AtomicForge elements and show ProtoForge UI
+            document.getElementById('atomicforge-controls').style.display = 'none';
+            document.getElementById('protoforge-controls').style.display = 'block';
+            document.getElementById('protoforge-status').style.display = 'block';
+            document.querySelector('.level-title').textContent = 'PROTOFORGE - Level 3';
+
+            // Fade out other particles/molecules
+            particles.forEach(p => { if (p.molecule !== protoCell) p.fade = true; });
+            molecules.forEach(m => { if (m !== protoCell) m.fade = true; });
+
+            const overlay = document.getElementById('abiogenesis-overlay');
+            const title = document.getElementById('abiogenesis-title');
             
             // For now, we can just display a message and reset
+            overlay.classList.add('show');
+
+            setTimeout(() => { title.textContent = "From chemistry, biology..."; }, 1000);
+            setTimeout(() => { title.textContent = "Nurture the spark of life."; }, 5000);
+            setTimeout(() => { overlay.classList.remove('show'); }, 8000);
+        }
+
+        function transitionToFullLifeForge() { // Renamed to avoid conflict
+            currentGameState = GameState.LIFEFORGE;
+            console.log("Transitioning to LifeForge with evolved genome:", protoCell.genome);
+
+            const overlay = document.getElementById('abiogenesis-overlay');
+            const title = document.getElementById('abiogenesis-title');
+            overlay.classList.add('show');
+            title.textContent = "LIFEFORGE";
+
             setTimeout(() => {
                 const overlay = document.getElementById('abiogenesis-overlay');
                 overlay.classList.remove('show');
                 alert("Congratulations! You've reached LifeForge. The simulation will now reset to demonstrate the complete loop. The next phase of development starts here!");
+                alert("Congratulations! You have successfully nurtured the first cell. The simulation will now reset as we prepare to build the full LifeForge stage.");
                 resetSimulation();
             }, 5000);
         }
@@ -2576,6 +2870,7 @@
         class AbiogenesisDetector {
             check() {
                 if (abiogenesisTriggered || currentLevel < 3) return;
+                if (currentGameState !== GameState.ATOMICFORGE || abiogenesisTriggered || currentLevel < 3) return;
 
                 const hasLipids = (moleculeTypes.get('Lipid Precursor') || 0) > 5;
                 const hasAminoAcids = (moleculeTypes.get('Glycine (Amino Acid)') || 0) > 5;
@@ -2595,6 +2890,7 @@
                 if (!isPaused) {
                     togglePause();
                 }
+                console.log("Proto-cell formation detected! Transitioning to ProtoForge.");
 
                 // 2. Set up the camera focus
                 abiogenesisFocus = true;
@@ -2627,8 +2923,10 @@
 
                 // 4. After the sequence, transition to LifeForge
                 setTimeout(() => {
-                    transitionToLifeForge(protoCell);
+                    transitionToFullLifeForge(protoCell);
                 }, 14000);
+                unlockAchievement('abiogenesis');
+                transitionToProtoForge(protoCell);
             }
         }
         const abiogenesisDetector = new AbiogenesisDetector();
@@ -2794,6 +3092,24 @@
             // Update Level Progress
             updateLevelProgress();
 
+            if (currentGameState === GameState.PROTOFORGE && protoCell) {
+                protoCell.updateProtoCell();
+                const statusDiv = document.getElementById('protoforge-status');
+                statusDiv.innerHTML = `
+                    <h3>Proto-Cell Status</h3>
+                    <p>Energy: ${protoCell.energy.toFixed(2)}</p>
+                    <p>Integrity: ${protoCell.integrity.toFixed(2)}%</p>
+                    <p>Replications: ${protoCell.replications}</p>
+                `;
+                if (protoCell.replications >= 3) {
+                    transitionToFullLifeForge();
+                }
+            }
+
+
+            // Update help panel if open
+            updateRealTimeHelp();
+
             // Special achievement tracking
             // Thermodynamist: Keep temp between 45-55 for 30s
             if (temperature >= 45 && temperature <= 55) {
@@ -2827,7 +3143,7 @@
             document.getElementById('achievement-help-description').textContent = help.description;
             
             // Update progress
-            updateHelpProgress(achievementId);
+            updateHelpProgress(achievementId, help);
             
             // Update strategy
             const strategyList = document.getElementById('achievement-help-strategy-list');
@@ -2836,19 +3152,21 @@
             // Update parameters
             const paramsDiv = document.getElementById('achievement-help-parameters');
             paramsDiv.innerHTML = `
-                <div class="param-item">
-                    <div class="param-label">Temperature</div>
-                    <div class="param-value">${help.parameters.temperature}</div>
+                <div class="param-item" id="help-param-temperature">
+                    <div><div class="param-label">Temperature</div><div class="param-value">${help.parameters.temperature}</div></div>
+                    <div class="param-status"></div>
                 </div>
-                <div class="param-item">
-                    <div class="param-label">Density</div>
-                    <div class="param-value">${help.parameters.density}</div>
+                <div class="param-item" id="help-param-density">
+                    <div><div class="param-label">Density</div><div class="param-value">${help.parameters.density}</div></div>
+                    <div class="param-status"></div>
                 </div>
-                <div class="param-item">
-                    <div class="param-label">Energy</div>
-                    <div class="param-value">${help.parameters.energy}</div>
+                <div class="param-item" id="help-param-energy">
+                    <div><div class="param-label">Energy</div><div class="param-value">${help.parameters.energy}</div></div>
+                    <div class="param-status"></div>
                 </div>
             `;
+            // Initial highlight update
+            updateRealTimeHelp();
             
             // Update formula
             document.getElementById('achievement-help-formula').textContent = help.formula;
@@ -2857,21 +3175,24 @@
             const hintTip = document.getElementById('achievement-help-hint');
             
             // Special cases
-            if (achievementId === 'thermodynamist') {
+            if (help.hint) {
+                hintTip.textContent = `💡 ${help.hint}`;
+            } else if (achievementId === 'thermodynamist') {
                 hintTip.textContent = "💡 Use small adjustments and watch the temperature value carefully!";
             } else if (achievementId === 'patient_chemist') {
                 hintTip.textContent = "💡 Let the simulation run in the background while you observe the patterns!";
             } else if (achievementId === 'master_chemist') {
                 hintTip.textContent = "💡 Check each achievement's help for specific strategies!";
             } else {
-                hintTip.textContent = "💡 Adjust parameters gradually and observe the results!";
+                hintTip.textContent = "💡 Pro-Tip: Adjust parameters gradually and observe the results!";
             }
             
             // Show the help panel
             document.getElementById('achievement-help').classList.add('show');
+            currentHelpAchievementId = achievementId;
         }
 
-        function updateHelpProgress(achievementId) {
+        function updateHelpProgress(achievementId, helpData) {
             const achievement = ACHIEVEMENTS[achievementId];
             const progressInfo = document.getElementById('achievement-help-progress-info');
             const progressBar = document.getElementById('help-progress-bar');
@@ -2960,7 +3281,7 @@
                     if (!hasWater) missingMolecules.push('H₂O');
                     if (!hasAmmonia) missingMolecules.push('NH₃');
                     if (!hasCyanide) missingMolecules.push('HCN');
-
+                    
                     if (current === 0) {
                         progressText = "None formed yet. Need H₂O, NH₃, HCN.";
                     } else if (current === target) {
@@ -2976,7 +3297,7 @@
                     progressText = `${unlocked}/${target} achievements unlocked`;
                     break;
                 default:
-                    progressText = "Track your progress above";
+                    progressText = achievement.unlocked ? "Completed!" : "Not started";
             }
             
             const progressPercent = Math.min(100, (current / target) * 100);
@@ -2987,6 +3308,7 @@
 
         function closeHelp() {
             document.getElementById('achievement-help').classList.remove('show');
+            currentHelpAchievementId = null;
         }
 
         // Keyboard shortcuts
@@ -3038,6 +3360,9 @@
                         } else {
                             showAchievementHelp('master_chemist');
                         }
+                } else if (helpPanel.classList.contains('show')) {
+                    e.preventDefault();
+                    closeHelp();
                     }
                     break;
             }
@@ -3163,6 +3488,57 @@
             }
         });
 
+        // --- INTRO CANVAS SCRIPT ---
+        const introCanvas = document.getElementById('intro-canvas');
+        const introCtx = introCanvas.getContext('2d');
+        let introParticles = [];
+
+        function resizeIntroCanvas() {
+            introCanvas.width = window.innerWidth;
+            introCanvas.height = window.innerHeight;
+        }
+
+        class IntroParticle {
+            constructor() {
+                this.x = Math.random() * introCanvas.width;
+                this.y = Math.random() * introCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > introCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > introCanvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                introCtx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                introCtx.beginPath();
+                introCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                introCtx.fill();
+            }
+        }
+
+        function initIntroAnimation() {
+            resizeIntroCanvas();
+            for (let i = 0; i < 100; i++) {
+                introParticles.push(new IntroParticle());
+            }
+            animateIntro();
+        }
+
+        function animateIntro() {
+            introCtx.clearRect(0, 0, introCanvas.width, introCanvas.height);
+            introParticles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateIntro);
+        }
         // Initialize achievements display
         updateAchievementsDisplay();
         
@@ -3181,6 +3557,11 @@
         
         adjustParticleCount();
         animate();
+
+        // Start the intro animation
+        initIntroAnimation();
     </script>
+    <script src="data.js"></script>
+    <script src="simulation.js"></script>
 </body>
 </html>
